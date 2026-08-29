@@ -83,6 +83,34 @@ body {
     opacity: 1 !important;
     transform: none !important;
   }
+
+  /* The "how it works" track is a horizontal strip that only becomes readable
+     because ScrollTrigger translates it. Under reduced motion no scroll
+     animation is registered, so steps 02-04 would sit outside an
+     overflow-hidden section — unreachable. Fall back to the stacked mobile
+     layout at every width instead. */
+  #how {
+    height: auto !important;
+    padding-block: 6rem !important;
+  }
+  #how .h-track {
+    flex-direction: column !important;
+    gap: 3.5rem !important;
+    padding-inline: 1.5rem !important;
+  }
+  #how .h-track > * {
+    width: auto !important;
+    padding-inline: 0 !important;
+  }
+  #how .how-eyebrow {
+    position: static !important;
+    padding-top: 0 !important;
+    padding-inline: 1.5rem !important;
+    margin-bottom: 2.5rem;
+  }
+  #how .rail-wrap {
+    display: none !important;
+  }
 }
 
 ::selection {

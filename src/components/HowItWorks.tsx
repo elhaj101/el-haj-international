@@ -97,7 +97,7 @@ export default function HowItWorks() {
       ref={root}
       className="relative overflow-hidden py-24 md:h-svh md:py-0"
     >
-      <div className="mx-auto max-w-[1400px] px-6 md:absolute md:inset-x-0 md:top-0 md:z-10 md:px-10 md:pt-28">
+      <div className="how-eyebrow mx-auto max-w-[1400px] px-6 md:absolute md:inset-x-0 md:top-0 md:z-10 md:px-10 md:pt-28">
         <p className="eyebrow">How it works</p>
       </div>
 
@@ -123,7 +123,7 @@ export default function HowItWorks() {
       </div>
 
       {/* Progress rail — desktop only, mirrors the horizontal travel. */}
-      <div className="mx-auto hidden max-w-[1400px] px-10 md:absolute md:inset-x-0 md:bottom-16 md:block">
+      <div className="rail-wrap mx-auto hidden max-w-[1400px] px-10 md:absolute md:inset-x-0 md:bottom-16 md:block">
         <div className="relative h-px w-full bg-line">
           <div className="rail-fill absolute inset-0 origin-left scale-x-0 bg-accent" />
           <div
