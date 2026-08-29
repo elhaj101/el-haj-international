@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------
+   El Haj International — design tokens
+   Light/bright palette throughout (no dark hero). Boldness comes
+   from type scale and contrast, not dark backgrounds.
+   Amber is the single accent and is reserved for CTAs + the active
+   state of a step. Never decorative.
+   --------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #fbfaf8; /* warm off-white */
+  --bg-alt: #f2efea; /* subtle section shift */
+  --fg: #111111; /* near-black, not pure */
+  --muted: #6b6560;
+  --accent: #e8942b; /* from the logo's SHIPPING wordmark */
+  --line: rgba(17, 17, 17, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-line: var(--line);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* The palette is deliberately fixed — this is a brand surface, not an app.
+   Honour dark-mode users by keeping contrast legible rather than inverting. */
+
+html {
+  scroll-behavior: auto; /* Lenis owns scrolling; never fight it */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display type: tight leading, slight negative tracking — the single
+   biggest "premium" tell per the design system. */
+.display {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* Small tracked label that opens each section — repeated pattern keeps
+   the page feeling composed. */
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.measure {
+  max-width: 62ch;
+}
+
+/* SplitText line masking */
+.line-mask {
+  overflow: hidden;
+  display: block;
+}
+
+/* Elements that animate in start hidden, but only when JS is running —
+   guarantees a readable page if scripts fail (no-JS fallback). */
+.js-ready [data-reveal] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-ready [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
