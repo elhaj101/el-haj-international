@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Wordmark } from "@/components/Logo";
+import AnimatedNumber from "@/components/AnimatedNumber";
 import {
   CUSTOMS_DATA_AS_OF,
   MIN_CHARGEABLE_KG,
@@ -40,15 +41,37 @@ export default function CalculatorPage() {
   const waMessage =
     `Hi, I used the calculator on your site. ` +
     `Shipment: ~${weight} kg of ${kind === "used" ? "used household goods" : "new goods"}` +
-    `, estimated ${eur(quote.rangeLowEur)}–${eur(quote.rangeHighEur)}. ` +
-    `Can you confirm?`;
+    `, estimated ${eur(quote.rangeLowEur)}–${eur(quote.rangeHighEur)}. Can you confirm?`;
+
+  const breakdown = (
+    <>
+      <dl className="space-y-3 text-sm">
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted">Freight ({quote.chargeableKg} kg)</dt>
+          <dd className="tabular-nums">{eur(quote.freightEur)}</dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted">Clearance &amp; documentation</dt>
+          <dd className="tabular-nums">{eur(quote.clearanceEur)}</dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted">Estimated customs duty</dt>
+          <dd className="tabular-nums">{eur(quote.dutyEur)}</dd>
+        </div>
+      </dl>
+      <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-muted">
+        {quote.dutyBasis}
+      </p>
+    </>
+  );
 
   return (
-    <div className="min-h-svh">
+    // Bottom padding clears the sticky mobile summary bar.
+    <div className="min-h-svh pb-32 lg:pb-0">
       {/* Deliberately plain header — this is a tool people bounce to and from,
           not a branded destination. */}
       <header className="border-b border-line px-6 py-4 lg:px-10">
-        <div className="mx-auto flex max-w-[1000px] items-center justify-between">
+        <div className="mx-auto flex max-w-[1100px] items-center justify-between">
           <Link href="/" aria-label="El Haj International — home">
             <Wordmark compact />
           </Link>
@@ -61,9 +84,9 @@ export default function CalculatorPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1000px] px-6 py-14 lg:px-10">
+      <main className="mx-auto max-w-[1100px] px-6 py-12 lg:px-10 lg:py-16">
         <p className="eyebrow">Shipping estimate</p>
-        <h1 className="display mt-4 text-[clamp(2rem,5vw,3.5rem)]">
+        <h1 className="display mt-4 text-[clamp(2.1rem,7vw,3.5rem)]">
           What will it cost?
         </h1>
         <p className="measure mt-4 text-muted">
@@ -71,7 +94,7 @@ export default function CalculatorPage() {
           needed, and nothing is sent to us unless you choose to message.
         </p>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
+        <div className="mt-10 grid gap-10 lg:mt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
           {/* ---- Inputs ---- */}
           <div className="space-y-9">
             <fieldset>
@@ -109,7 +132,7 @@ export default function CalculatorPage() {
             <div>
               <label htmlFor="weight" className="text-sm font-semibold">
                 Weight
-                <span className="ml-2 font-normal text-muted">
+                <span className="ml-2 font-normal tabular-nums text-muted">
                   {weight} kg
                 </span>
               </label>
@@ -160,7 +183,7 @@ export default function CalculatorPage() {
                 <div>
                   <label htmlFor="value" className="text-sm font-semibold">
                     Declared value
-                    <span className="ml-2 font-normal text-muted">
+                    <span className="ml-2 font-normal tabular-nums text-muted">
                       {eur(value)}
                     </span>
                   </label>
@@ -177,38 +200,24 @@ export default function CalculatorPage() {
                 </div>
               </>
             )}
+
+            {/* Breakdown in normal flow on mobile — the sticky bar below shows
+                only the headline figure. */}
+            <div className="rounded-2xl border border-line bg-bg-alt p-6 lg:hidden">
+              <p className="eyebrow mb-5">Breakdown</p>
+              {breakdown}
+            </div>
           </div>
 
-          {/* ---- Result ---- */}
-          <aside className="h-fit rounded-2xl border border-line bg-bg-alt p-8 lg:sticky lg:top-10">
+          {/* ---- Result: sticky aside on desktop only ---- */}
+          <aside className="hidden h-fit rounded-2xl border border-line bg-bg-alt p-8 lg:sticky lg:top-10 lg:block">
             <p className="eyebrow">Estimated total</p>
-            <p className="display mt-3 text-[clamp(2rem,5vw,3rem)] leading-none">
-              {eur(quote.rangeLowEur)}
+            <p className="display mt-3 text-[clamp(2rem,4vw,3rem)] leading-none tabular-nums">
+              <AnimatedNumber value={quote.rangeLowEur} format={eur} />
               <span className="text-muted"> – </span>
-              {eur(quote.rangeHighEur)}
+              <AnimatedNumber value={quote.rangeHighEur} format={eur} />
             </p>
-
-            <dl className="mt-8 space-y-3 border-t border-line pt-6 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted">
-                  Freight ({quote.chargeableKg} kg)
-                </dt>
-                <dd>{eur(quote.freightEur)}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted">Clearance & documentation</dt>
-                <dd>{eur(quote.clearanceEur)}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted">Estimated customs duty</dt>
-                <dd>{eur(quote.dutyEur)}</dd>
-              </div>
-            </dl>
-
-            <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-muted">
-              {quote.dutyBasis}
-            </p>
-
+            <div className="mt-8 border-t border-line pt-6">{breakdown}</div>
             <a
               href={whatsappLink(waMessage)}
               target="_blank"
@@ -220,17 +229,14 @@ export default function CalculatorPage() {
           </aside>
         </div>
 
-        {/* Honest about what this is. The underlying figures are four years old
-            and the business is not licensed yet — say so rather than imply a
-            binding quote. */}
-        <section className="mt-16 rounded-2xl border border-line p-8">
+        <section className="mt-14 rounded-2xl border border-line p-7 lg:p-8">
           <h2 className="display text-xl">How this is calculated</h2>
           <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
             <li>
               <strong className="text-fg">Used goods are taxed by weight.</strong>{" "}
               Lebanese customs values used household goods at a deemed rate per
-              kilo rather than what you say they are worth, so a heavy box of
-              old clothes and a light box of good ones are taxed the same.
+              kilo rather than what you say they are worth, so a heavy box of old
+              clothes and a light box of good ones are taxed the same.
             </li>
             <li>
               <strong className="text-fg">
@@ -248,6 +254,32 @@ export default function CalculatorPage() {
           </ul>
         </section>
       </main>
+
+      {/* Mobile summary bar. The result panel used to sit below the inputs on a
+          phone, so dragging the weight slider changed a figure the user could
+          not see. This keeps it on screen. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 px-5 py-3.5 backdrop-blur-md lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+              Estimated
+            </p>
+            <p className="display truncate text-2xl leading-tight tabular-nums">
+              <AnimatedNumber value={quote.rangeLowEur} format={eur} />
+              <span className="text-muted"> – </span>
+              <AnimatedNumber value={quote.rangeHighEur} format={eur} />
+            </p>
+          </div>
+          <a
+            href={whatsappLink(waMessage)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white"
+          >
+            Check with us
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
