@@ -65,24 +65,6 @@ export const COMMERCIAL_DUTY_RATE = 0.465;
 /** Lebanon's standard VAT rate, charged on CIF value (not stacked on duty). */
 export const LEBANON_VAT_RATE = 0.11;
 
-/**
- * Per-category duty rates for NEW goods, assessed on declared value.
- * Source: customs.gov.lb "Duties & Taxes on Special Commodities",
- * read 2026-08-28. VAT of 11% applies on top of each.
- */
-export const NEW_GOODS_CATEGORIES = [
-  { id: "apparel", label: "Clothing & apparel", duty: 0.05 },
-  { id: "shoes", label: "Shoes", duty: 0.1 },
-  { id: "bags", label: "Handbags", duty: 0.1 },
-  { id: "computers", label: "Computers & laptops", duty: 0.0 },
-  { id: "phones", label: "Mobile phones", duty: 0.05 },
-  { id: "watches", label: "Watches", duty: 0.05 },
-  { id: "cosmetics", label: "Perfume & cosmetics", duty: 0.15 },
-  { id: "linens", label: "Linens & towels", duty: 0.15 },
-  { id: "appliances_new", label: "Appliances (new)", duty: 0.15 },
-] as const;
-
-export type NewGoodsCategoryId = (typeof NEW_GOODS_CATEGORIES)[number]["id"];
 
 /** USD → EUR. Freight is priced in EUR; Lebanese duty is assessed in USD. */
 export const USD_TO_EUR = 0.92;
@@ -119,15 +101,171 @@ export const ESTIMATE_SPREAD = 0.12;
    CALCULATION
    ------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------
+   DESTINATIONS
+
+   Only Lebanon ships today, because Lebanon is the only corridor we have
+   researched customs data for. Adding a destination means adding its duty
+   table and deemed-valuation rules — not just another option in a list.
+   ------------------------------------------------------------------- */
+
+export interface Destination {
+  id: string;
+  name: string;
+  /** Shown under the big country name. */
+  gateway: string;
+  /** Flag colours, used as accents on the destination header. */
+  accents: [string, string];
+}
+
+export const DESTINATIONS: Destination[] = [
+  {
+    id: "LB",
+    name: "Lebanon",
+    gateway: "Port of Beirut",
+    accents: ["#d7282f", "#00a651"],
+  },
+];
+
+/* -------------------------------------------------------------------
+   CARGO CATEGORIES
+
+   Lebanese customs charges a different rate per commodity, and — more
+   importantly — uses a different *basis* depending on whether the goods are
+   used or new:
+
+   - `weight`  used household goods are assessed on a deemed value per kilo,
+               so declared value is bypassed entirely.
+   - `value`   new goods are assessed on declared value at the category's own
+               duty rate, plus VAT and the security fee.
+
+   `band` (0-4) orders the categories by duty rate and drives the ordinal
+   colour ramp in the UI — it is a presentation index, not a tax figure.
+   ------------------------------------------------------------------- */
+
+export interface CargoCategory {
+  id: string;
+  label: string;
+  blurb: string;
+  basis: "weight" | "value";
+  /** Customs duty rate. VAT and the security fee are added on top. */
+  duty: number;
+  band: 0 | 1 | 2 | 3 | 4;
+}
+
+export const CARGO_CATEGORIES: CargoCategory[] = [
+  {
+    id: "used-household",
+    label: "Used household goods",
+    blurb: "Furniture, kitchenware, worn clothing, personal effects",
+    basis: "weight",
+    duty: USED_HOUSEHOLD_DUTY_RATE,
+    band: 4,
+  },
+  {
+    id: "computers",
+    label: "Computers & laptops",
+    blurb: "Duty free — VAT and security fee only",
+    basis: "value",
+    duty: 0,
+    band: 0,
+  },
+  {
+    id: "apparel",
+    label: "Clothing & apparel",
+    blurb: "New garments",
+    basis: "value",
+    duty: 0.05,
+    band: 1,
+  },
+  {
+    id: "phones",
+    label: "Mobile phones",
+    blurb: "Handsets and tablets",
+    basis: "value",
+    duty: 0.05,
+    band: 1,
+  },
+  {
+    id: "watches",
+    label: "Watches",
+    blurb: "Wristwatches and clocks",
+    basis: "value",
+    duty: 0.05,
+    band: 1,
+  },
+  {
+    id: "shoes",
+    label: "Shoes",
+    blurb: "Minimum fee per pair applies",
+    basis: "value",
+    duty: 0.1,
+    band: 2,
+  },
+  {
+    id: "bags",
+    label: "Handbags & luggage",
+    blurb: "Minimum fee per piece applies",
+    basis: "value",
+    duty: 0.1,
+    band: 2,
+  },
+  {
+    id: "appliances",
+    label: "Appliances (new)",
+    blurb: "White goods and small appliances",
+    basis: "value",
+    duty: 0.15,
+    band: 3,
+  },
+  {
+    id: "cosmetics",
+    label: "Perfume & cosmetics",
+    blurb: "One of the heaviest-taxed categories",
+    basis: "value",
+    duty: 0.15,
+    band: 3,
+  },
+  {
+    id: "linens",
+    label: "Linens & towels",
+    blurb: "Bedsheets, towels, household textiles",
+    basis: "value",
+    duty: 0.15,
+    band: 3,
+  },
+];
+
+export const getCategory = (id: string) =>
+  CARGO_CATEGORIES.find((c) => c.id === id) ?? CARGO_CATEGORIES[0];
+
+/**
+ * Ordinal ramp for the duty bands, light -> dark as the rate climbs. One hue,
+ * monotone lightness; validated against the calculator surface (#f2efea).
+ */
+export const BAND_COLORS = [
+  "#6da7ec",
+  "#3987e5",
+  "#256abf",
+  "#184f95",
+  "#0d366b",
+] as const;
+
+/** Cost-component colours for the breakdown bar. Validated all-pairs. */
+export const COST_COLORS = {
+  freight: "#2a78d6",
+  clearance: "#eb6834",
+  duty: "#1baf7a",
+} as const;
+
 export type ShipmentKind = "used" | "new";
 
 export interface QuoteInput {
   weightKg: number;
-  kind: ShipmentKind;
-  /** Only used when kind === "new" — declared value of the goods, EUR. */
+  /** Id from CARGO_CATEGORIES. Its `basis` decides how duty is assessed. */
+  categoryId: string;
+  /** Only used by value-basis categories — declared value of the goods, EUR. */
   declaredValueEur?: number;
-  /** Only used when kind === "new". */
-  categoryId?: NewGoodsCategoryId;
 }
 
 export interface QuoteBreakdown {
@@ -152,27 +290,24 @@ export function calculateQuote(input: QuoteInput): QuoteBreakdown {
 
   const freightEur = chargeableKg * FREIGHT_EUR_PER_KG;
   const clearanceEur = CLEARANCE_FEE_EUR;
+  const category = getCategory(input.categoryId);
 
   let dutyEur: number;
   let dutyBasis: string;
 
-  if (input.kind === "used") {
+  if (category.basis === "weight") {
     // Weight is the tax base, not declared value.
-    const deemedUsd = chargeableKg * DEEMED_VALUATION_USD_PER_KG;
-    const deemedEur = deemedUsd * USD_TO_EUR;
-    dutyEur = deemedEur * (USED_HOUSEHOLD_DUTY_RATE + SECURITY_FEE_RATE);
+    const deemedEur =
+      chargeableKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
+    dutyEur = deemedEur * (category.duty + SECURITY_FEE_RATE);
     dutyBasis =
       `Assessed on a deemed value of USD ${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg ` +
-      `(${chargeableKg} kg), at ${(USED_HOUSEHOLD_DUTY_RATE * 100).toFixed(1)}% duty ` +
+      `(${chargeableKg} kg), at ${(category.duty * 100).toFixed(1)}% duty ` +
       `+ ${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee. What the goods are ` +
       `actually worth does not change this figure.`;
   } else {
-    const category =
-      NEW_GOODS_CATEGORIES.find((c) => c.id === input.categoryId) ??
-      NEW_GOODS_CATEGORIES[0];
     const value = Math.max(0, input.declaredValueEur || 0);
-    dutyEur =
-      value * (category.duty + LEBANON_VAT_RATE + SECURITY_FEE_RATE);
+    dutyEur = value * (category.duty + LEBANON_VAT_RATE + SECURITY_FEE_RATE);
     dutyBasis =
       `Assessed on declared value (€${value.toFixed(0)}) at ` +
       `${(category.duty * 100).toFixed(0)}% duty + ` +
