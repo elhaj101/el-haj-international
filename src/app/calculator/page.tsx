@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Wordmark } from "@/components/Logo";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import Flag from "@/components/Flag";
 import {
   BAND_COLORS,
   CARGO_CATEGORIES,
@@ -81,12 +82,11 @@ export default function CalculatorPage() {
                 onClick={() => setDestinationId(d.id)}
                 className="group flex items-center gap-5 rounded-2xl border border-line p-6 text-left transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
               >
-                <span
-                  aria-hidden
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line bg-bg-alt text-3xl leading-none"
-                >
-                  {d.flag}
-                </span>
+                <Flag
+                  id={d.id}
+                  name={d.name}
+                  className="w-[4.5rem] transition-transform duration-200 group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                />
                 <span>
                   <span className="display block text-3xl">{d.name}</span>
                   <span className="mt-1 block text-sm text-muted">
@@ -118,18 +118,19 @@ export default function CalculatorPage() {
       {/* Destination banner. A two-colour gradient wash plus a tricolour
           stripe used to sit here, built from an approximated flag palette
           (plain red/green for Lebanon, which isn't even the real flag) — busy
-          and, per feedback, confusing rather than clarifying. A small, correct
-          flag badge replaces both. */}
+          and, per feedback, confusing rather than clarifying. The flag itself,
+          drawn correctly and at a size worth looking at, does that job on its
+          own; see `Flag.tsx` for why it is artwork and not an emoji. */}
       <section className="border-b border-line bg-bg-alt">
         <div className="mx-auto max-w-[1100px] px-6 py-10 lg:px-10 lg:py-14">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-center gap-5">
-              <span
-                aria-hidden
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-line bg-bg text-4xl leading-none shadow-sm lg:h-20 lg:w-20 lg:text-5xl"
-              >
-                {destination.flag}
-              </span>
+              <Flag
+                id={destination.id}
+                name={destination.name}
+                priority
+                className="w-20 lg:w-28"
+              />
               <div>
                 <p className="eyebrow">Shipping to</p>
                 <h1 className="display mt-1 text-[clamp(2.5rem,9vw,6rem)] leading-[0.9]">

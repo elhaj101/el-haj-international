@@ -114,22 +114,19 @@ export interface Destination {
   name: string;
   /** Shown under the big country name. */
   gateway: string;
-  /**
-   * Unicode flag emoji — a small, correct flag badge rather than a two-colour
-   * gradient wash. An earlier version approximated Lebanon's flag as plain
-   * red/green for a background tint; the real flag is red-white-red with a
-   * green cedar, so that approximation was wrong on top of being visually
-   * noisy. The emoji renders the actual flag with no artwork to get wrong.
-   */
-  flag: string;
 }
+
+/*
+ * Flag artwork is deliberately NOT a field here. It used to be a Unicode emoji
+ * string, which Chrome on Windows renders as the literal letters "LB". The
+ * artwork now lives in `components/Flag.tsx`, keyed by the `id` above.
+ */
 
 export const DESTINATIONS: Destination[] = [
   {
     id: "LB",
     name: "Lebanon",
     gateway: "Port of Beirut",
-    flag: "🇱🇧",
   },
 ];
 
