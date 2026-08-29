@@ -78,17 +78,30 @@ body {
   opacity: 0;
 }
 
+/* Same contract for the preloader: it only becomes visible once JS is running,
+   so a failed script can never leave a full-screen overlay covering the page. */
+.preloader {
+  opacity: 0;
+  pointer-events: none;
+}
+.js-ready .preloader {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .js-ready [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
   }
+  .js-ready .preloader {
+    display: none !important;
+  }
 
-  /* The "how it works" track is a horizontal strip that only becomes readable
-     because ScrollTrigger translates it. Under reduced motion no scroll
-     animation is registered, so steps 02-04 would sit outside an
-     overflow-hidden section — unreachable. Fall back to the stacked mobile
-     layout at every width instead. */
+  /* The "how it works" track is a horizontal strip that is only readable
+     because ScrollTrigger translates it — that transform is layout-critical,
+     not decorative. With no scroll animation running, steps 02-04 would sit
+     outside an overflow-hidden section, unreachable. Stack them instead. */
   #how {
     height: auto !important;
     padding-block: 6rem !important;
@@ -96,20 +109,29 @@ body {
   #how .h-track {
     flex-direction: column !important;
     gap: 3.5rem !important;
-    padding-inline: 1.5rem !important;
   }
   #how .h-track > * {
     width: auto !important;
-    padding-inline: 0 !important;
+    padding-inline: 1.5rem !important;
   }
   #how .how-eyebrow {
     position: static !important;
     padding-top: 0 !important;
-    padding-inline: 1.5rem !important;
     margin-bottom: 2.5rem;
   }
   #how .rail-wrap {
     display: none !important;
+  }
+
+  /* Same reasoning for the container sweep: without the scrubbed travel the
+     section is just a pinned viewport with a huge static image over the type. */
+  .statement-section {
+    height: auto !important;
+    padding-block: 6rem !important;
+  }
+  .statement-section .swing-travel {
+    position: static !important;
+    margin-top: 2.5rem;
   }
 }
 

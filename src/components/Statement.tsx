@@ -9,10 +9,18 @@ import { SplitText } from "gsap/SplitText";
 import { asset } from "@/lib/asset";
 
 /**
- * The hero → "how it works" bridge. A container swings across the viewport on
- * scroll, carrying the eye down the page, while the deliberately broad
- * positioning line resolves behind it. Deliberately vague: it has to read as
- * relevant to a family sending boxes and to a business sourcing stock.
+ * The signature moment: a container is craned across the viewport while the
+ * positioning line resolves behind it.
+ *
+ * Two separate motions on nested elements, deliberately:
+ *   .swing-travel — scroll-scrubbed journey across the screen
+ *   .swing-idle   — a slow continuous sway, so the container reads as
+ *                   suspended from a crane even when the page is still
+ * Both run at every breakpoint. A previous version gated the travel behind
+ * min-width 768px, which left phones with a static picture.
+ *
+ * The line is deliberately broad — it has to speak to a family sending boxes
+ * and to a business sourcing stock.
  */
 export default function Statement() {
   const root = useRef<HTMLDivElement>(null);
@@ -20,64 +28,63 @@ export default function Statement() {
   useGSAP(
     () => {
       gsap.registerPlugin(ScrollTrigger, SplitText);
-      const mm = gsap.matchMedia();
+      const reduce = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
 
-      mm.add(
-        "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
-        () => {
-          const split = new SplitText(".statement-h2", {
-            type: "words",
-            wordsClass: "word",
-          });
+      if (reduce) {
+        gsap.set(".swing-travel", { opacity: 1, xPercent: 0, yPercent: 0 });
+        return;
+      }
 
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: root.current,
-              start: "top top",
-              end: "+=180%",
-              scrub: 1,
-              pin: true,
-            },
-          });
+      // Idle sway — independent of scroll position.
+      gsap.to(".swing-idle", {
+        rotate: 2.2,
+        duration: 3.4,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
+      gsap.to(".swing-idle", {
+        y: 14,
+        duration: 2.6,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
 
-          // The container is lifted, swung across, and set down.
-          tl.fromTo(
-            ".swinging-container",
-            { xPercent: -60, yPercent: -25, rotate: -7, opacity: 0 },
-            { opacity: 1, duration: 0.1 },
-            0,
-          )
-            .to(
-              ".swinging-container",
-              {
-                xPercent: 60,
-                yPercent: 30,
-                rotate: 5,
-                ease: "none",
-                duration: 1,
-              },
-              0,
-            )
-            .from(
-              split.words,
-              { opacity: 0.12, stagger: 0.06, duration: 0.35, ease: "none" },
-              0.05,
-            );
-        },
-      );
+      const split = new SplitText(".statement-h2", { type: "words" });
 
-      // Mobile: no pin (pinned sections are the first thing to break on small
-      // screens). Straight fade-in instead.
-      mm.add(
-        "(max-width: 767px) and (prefers-reduced-motion: no-preference)",
-        () => {
-          gsap.from(".statement-h2", {
-            opacity: 0,
-            y: 30,
-            scrollTrigger: { trigger: root.current, start: "top 75%" },
-          });
-        },
-      );
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: root.current,
+            start: "top top",
+            end: "+=200%",
+            scrub: 1,
+            pin: true,
+            invalidateOnRefresh: true,
+          },
+        })
+        // Craned in from the lower left, across, and away to the upper right.
+        .fromTo(
+          ".swing-travel",
+          { xPercent: -78, yPercent: 34, rotate: -9, scale: 0.86 },
+          {
+            xPercent: 78,
+            yPercent: -26,
+            rotate: 7,
+            scale: 1.04,
+            ease: "none",
+            duration: 1,
+          },
+          0,
+        )
+        .from(
+          split.words,
+          { opacity: 0.1, stagger: 0.05, duration: 0.3, ease: "none" },
+          0.05,
+        );
     },
     { scope: root },
   );
@@ -85,25 +92,27 @@ export default function Statement() {
   return (
     <section
       ref={root}
-      className="relative flex min-h-svh items-center overflow-hidden bg-bg-alt px-6 lg:px-10"
+      className="statement-section relative flex h-svh items-center overflow-hidden bg-bg-alt px-6 lg:px-10"
     >
-      {/* The travelling container. Sits behind the type so the statement stays
-          readable at every point in the swing. */}
-      <div className="swinging-container pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
-        <div className="relative h-[38vmin] w-[62vmin] opacity-90">
+      {/* Behind the type so the statement stays readable across the whole
+          sweep. Sized in vw so it stays large on a phone — an earlier version
+          used vmin and rendered about 240px wide on a handset. */}
+      <div className="swing-travel pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
+        <div className="swing-idle relative aspect-[1531/975] w-[105vw] max-w-none sm:w-[85vw] lg:w-[62vw]">
           <Image
             src={asset("/container.png")}
             alt=""
             fill
             unoptimized
-            className="object-contain drop-shadow-2xl"
+            sizes="(max-width: 640px) 105vw, (max-width: 1024px) 85vw, 62vw"
+            className="object-contain"
           />
         </div>
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px]">
-        <p className="eyebrow mb-8">What we do</p>
-        <h2 className="statement-h2 display max-w-[16ch] text-[clamp(2.25rem,7vw,5.5rem)]">
+        <p className="eyebrow mb-6">What we do</p>
+        <h2 className="statement-h2 display max-w-[15ch] text-[clamp(2.4rem,8vw,6rem)] [text-shadow:0_2px_24px_var(--bg-alt)]">
           We ship everything from Europe to the Middle East
         </h2>
       </div>

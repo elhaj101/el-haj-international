@@ -51,7 +51,7 @@ export function Wordmark({
       <ContainerMark className={compact ? "h-7 w-7" : "h-10 w-10"} />
       <span className="flex flex-col leading-none">
         <span
-          className="display text-fg"
+          className="display"
           style={{ fontSize: compact ? "1.05rem" : "1.35rem" }}
         >
           El Haj International
