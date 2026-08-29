@@ -115,7 +115,7 @@ export default function HowItWorks() {
             className="rail-marker absolute -top-3 left-0 text-accent"
             style={{ width: `${100 / STEPS.length}%` }}
           >
-            <ContainerMark className="h-6 w-6" strokeWidth={8} />
+            <ContainerMark className="h-6 w-[33px]" />
           </div>
         </div>
       </div>

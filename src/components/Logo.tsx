@@ -1,70 +1,120 @@
+import Image from "next/image";
+import { asset } from "@/lib/asset";
+
 /**
- * Line-art shipping container with a crane hook — redrawn as SVG from the
- * locked Canva mark ("Geometric Logo with Shipping Container and Crane Hook",
- * canva.com/design/DAHTnrq7zdQ) so it stays sharp at any size and can be
- * recoloured. Keep the two in sync if the Canva file changes.
+ * The brand mark is the exported artwork from the locked Canva design
+ * (canva.com/design/DAHTnrq7zdQ) — not a redraw. An earlier version of this
+ * file approximated it as hand-authored SVG, which drifted: it drew a line-art
+ * container with a crane hook, where the real mark is a solid container with no
+ * hook, and it recoloured the subtext to a single amber where the real mark
+ * uses red "SHIPPING" and gold "TRADING".
+ *
+ * Two variants ship. `light` is the same artwork with the neutral ink remapped
+ * to white for use over the dark photographic hero; the red and gold are left
+ * untouched so the black-red-gold reading survives.
+ *
+ * Keep these in sync with the Canva file if the logo ever changes — see
+ * scratch script `make_logo.py` in the session notes for how they were cut.
  */
+
+const LOCKUP_RATIO = 1400 / 314;
+const ICON_RATIO = 512 / 377;
+
+/** Container mark on its own — favicons, the preloader, the progress rail. */
 export function ContainerMark({
   className = "",
-  strokeWidth = 6,
+  light = false,
+  priority = false,
 }: {
   className?: string;
+  light?: boolean;
+  /** Above the fold (the preloader) — otherwise it lazy-loads and may not
+      arrive before the overlay has already lifted. */
+  priority?: boolean;
+  /** Accepted for API compatibility with the old SVG; the artwork is fixed. */
   strokeWidth?: number;
 }) {
   return (
-    <svg
-      viewBox="0 0 120 120"
-      fill="none"
-      className={className}
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      aria-hidden="true"
-    >
-      {/* crane hook */}
-      <path d="M60 4v14" />
-      <path d="M52 18h16" />
-      <path d="M60 18v10c0 6-8 6-8 0" />
-      {/* container body */}
-      <rect x="14" y="40" width="92" height="58" />
-      {/* top and bottom rails */}
-      <path d="M14 50h92M14 88h92" />
-      {/* corrugation */}
-      <path d="M34 50v38M48 50v38M62 50v38M76 50v38M90 50v38" />
-      {/* corner castings */}
-      <path d="M14 40h10M96 40h10M14 98h10M96 98h10" />
-    </svg>
-  );
-}
-
-/** Full horizontal lockup: mark + wordmark + tracked subtext. */
-export function Wordmark({
-  className = "",
-  compact = false,
-}: {
-  className?: string;
-  compact?: boolean;
-}) {
-  return (
-    <span className={`inline-flex items-center gap-3 ${className}`}>
-      <ContainerMark className={compact ? "h-7 w-7" : "h-10 w-10"} />
-      <span className="flex flex-col leading-none">
-        <span
-          className="display"
-          style={{ fontSize: compact ? "1.05rem" : "1.35rem" }}
-        >
-          El Haj International
-        </span>
-        {!compact && (
-          <span
-            className="eyebrow mt-1"
-            style={{ fontSize: "0.6rem", letterSpacing: "0.3em" }}
-          >
-            Shipping <span className="text-accent">·</span> Trading
-          </span>
-        )}
-      </span>
+    <span className={`relative inline-block ${className}`}>
+      <Image
+        src={asset(light ? "/logo-icon-light.png" : "/logo-icon.png")}
+        alt=""
+        fill
+        priority={priority}
+        unoptimized
+        sizes="64px"
+        className="object-contain"
+      />
     </span>
   );
 }
+
+/**
+ * Full horizontal lockup. `height` drives the size; width follows the
+ * artwork's own aspect ratio so the lockup can never be distorted.
+ */
+export function Wordmark({
+  className = "",
+  compact = false,
+  light = false,
+}: {
+  className?: string;
+  compact?: boolean;
+  light?: boolean;
+}) {
+  const h = compact ? 26 : 40;
+  return (
+    <span
+      className={`relative inline-block align-middle ${className}`}
+      style={{ height: h, width: h * LOCKUP_RATIO }}
+    >
+      <Image
+        src={asset(light ? "/logo-lockup-light.png" : "/logo-lockup.png")}
+        alt="El Haj International — Shipping · Trading"
+        fill
+        priority
+        unoptimized
+        sizes="360px"
+        className="object-contain object-left"
+      />
+    </span>
+  );
+}
+
+/**
+ * Nav variant: both artworks stacked and cross-faded, because swapping `src`
+ * on scroll makes the mark flash while the new file decodes.
+ */
+export function WordmarkSwap({
+  light,
+  compact = true,
+}: {
+  light: boolean;
+  compact?: boolean;
+}) {
+  const h = compact ? 26 : 40;
+  return (
+    <span
+      className="relative inline-block align-middle"
+      style={{ height: h, width: h * LOCKUP_RATIO }}
+    >
+      {[false, true].map((isLight) => (
+        <Image
+          key={String(isLight)}
+          src={asset(isLight ? "/logo-lockup-light.png" : "/logo-lockup.png")}
+          alt={isLight ? "" : "El Haj International — Shipping · Trading"}
+          aria-hidden={isLight || undefined}
+          fill
+          priority
+          unoptimized
+          sizes="360px"
+          className={`object-contain object-left transition-opacity duration-300 ${
+            light === isLight ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+    </span>
+  );
+}
+
+export { ICON_RATIO, LOCKUP_RATIO };

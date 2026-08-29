@@ -84,7 +84,7 @@ export default function Preloader() {
       className="preloader fixed inset-0 z-[100] flex flex-col items-center justify-center bg-bg"
       aria-hidden="true"
     >
-      <ContainerMark className="pl-mark h-14 w-14" strokeWidth={5} />
+      <ContainerMark className="pl-mark h-14 w-[76px]" priority />
       <p className="display mt-6 text-5xl tabular-nums">
         <span className="pl-count">0</span>
         <span className="text-accent">%</span>

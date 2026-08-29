@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLenis } from "lenis/react";
-import { Wordmark } from "./Logo";
+import { WordmarkSwap } from "./Logo";
 
 const LINKS = [
   { label: "How it works", href: "#how" },
@@ -44,7 +44,7 @@ export default function Nav() {
     >
       <nav className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-4 lg:px-10">
         <Link href="/" aria-label="El Haj International — home">
-          <Wordmark compact />
+          <WordmarkSwap light={!solid} />
         </Link>
 
         <div className="flex items-center gap-5 lg:gap-8">
