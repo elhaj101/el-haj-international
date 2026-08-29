@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { gsap } from "gsap";
@@ -11,13 +10,16 @@ import { whatsappLink } from "@/lib/pricing";
 import { asset } from "@/lib/asset";
 
 /**
- * Full-bleed photographic hero — the ship fills the viewport at every size,
- * phone included. An earlier version made this an inset panel beside the
+ * Full-bleed video hero — the ship fills the viewport at every size, phone
+ * included. An earlier version made this an inset still image beside the
  * headline; on a phone that collapsed to a small picture under some text and
- * lost the whole point of the shot.
+ * lost the whole point of the shot. This is a video of the same shot, muted
+ * and looped as a background layer, not a piece of content someone presses
+ * play on.
  */
 export default function Hero() {
   const root = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useGSAP(
     () => {
@@ -25,6 +27,17 @@ export default function Hero() {
       const reduce = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+
+      // A looping video is exactly the "non-essential motion" reduced-motion
+      // exists to suppress. Never autoplay it — leave the poster frame showing,
+      // which reads as an ordinary static photo. The <video> ships
+      // preload="none" for the same visitors, so their browser never fetches
+      // the ~4MB file at all; only flip it to "auto" right before playing.
+      if (!reduce && videoRef.current) {
+        videoRef.current.preload = "auto";
+        videoRef.current.load();
+        videoRef.current.play().catch(() => {});
+      }
 
       if (reduce) {
         gsap.set(".hero-fade, .hero-h1", { opacity: 1, y: 0 });
@@ -93,20 +106,29 @@ export default function Hero() {
       className="relative h-svh w-full overflow-hidden bg-[#0d1720]"
     >
       <div className="hero-media absolute inset-0">
-        <Image
-          src={asset("/hero-ship.jpg")}
-          alt="A container ship at sea"
-          fill
-          priority
-          unoptimized
-          sizes="100vw"
-          // Source is a tall drone portrait (1440x2912) with the ship sitting
-          // about a quarter of the way down. On a wide desktop crop,
-          // object-center would land on open water and miss the ship entirely
-          // — bias the focal point to where the subject actually is.
-          className="object-cover"
-          style={{ objectPosition: "50% 24%" }}
-        />
+        {/* Muted decorative loop, not content — no controls, no audio track,
+            aria-hidden. The poster is this video's own first frame, so there
+            is no visible swap when playback starts. Composition is a portrait
+            drone shot (720x1280) with the ship sitting a little above centre;
+            object-cover's default 50% 50% keeps it in frame on a phone but
+            drifts toward open water on a wide desktop crop, so the focal
+            point is set explicitly. */}
+        <video
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          // Default off — flipped to "auto" in the effect above, and only
+          // when motion is not reduced. Reduced-motion visitors never fetch
+          // this file at all.
+          preload="none"
+          aria-hidden="true"
+          poster={asset("/hero-ship-poster.jpg")}
+          className="h-full w-full object-cover"
+          style={{ objectPosition: "50% 37%" }}
+        >
+          <source src={asset("/hero-ship.mp4")} type="video/mp4" />
+        </video>
       </div>
 
       {/* Scrim weighted to the bottom, where the type sits, so the photograph
