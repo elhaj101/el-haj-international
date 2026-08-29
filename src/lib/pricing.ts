@@ -150,17 +150,48 @@ export interface CargoCategory {
   basis: "weight" | "value";
   /** Customs duty rate. VAT and the security fee are added on top. */
   duty: number;
-  band: 0 | 1 | 2 | 3 | 4;
+  /** Caveat surfaced when this category is selected, if any. */
+  caveat?: string;
 }
 
+/**
+ * Every rate below is sourced — from customs.gov.lb's own commodity tool
+ * (read 2026-08-28) or the FIDI Lebanon guide. None are estimated.
+ *
+ * Categories we know exist but deliberately do NOT list, because we have no
+ * rate for them and guessing one on a public page would be inventing customs
+ * data: books and dictionaries (HS 49019900), children's illustrated books
+ * (49030000), jewellery (71131110 / 71131190), sports equipment (95069900),
+ * and recorded media / video games (85234900). Add them once a broker or the
+ * customs tariff schedule confirms the rates.
+ */
 export const CARGO_CATEGORIES: CargoCategory[] = [
   {
     id: "used-household",
     label: "Used household goods",
-    blurb: "Furniture, kitchenware, worn clothing, personal effects",
+    blurb: "Furniture, kitchenware, personal effects",
     basis: "weight",
     duty: USED_HOUSEHOLD_DUTY_RATE,
-    band: 4,
+    caveat:
+      "Carries a 3-year no-resale undertaking in Lebanon. Not suitable for anyone restocking a shop.",
+  },
+  {
+    id: "used-clothing",
+    label: "Used clothing",
+    blurb: "Worn garments and textiles (HS 6309.00)",
+    basis: "value",
+    duty: 0.05,
+    caveat:
+      "This line carries an \"EC\" government control we could not fully identify — confirm with a broker before shipping at volume.",
+  },
+  {
+    id: "used-appliances",
+    label: "Appliances (used)",
+    blurb: "Duty free with the correct documents",
+    basis: "value",
+    duty: 0,
+    caveat:
+      "FIDI's own prohibited-items list contradicts this row for battery and domestic appliances. Needs a direct answer from a broker.",
   },
   {
     id: "computers",
@@ -168,15 +199,13 @@ export const CARGO_CATEGORIES: CargoCategory[] = [
     blurb: "Duty free — VAT and security fee only",
     basis: "value",
     duty: 0,
-    band: 0,
   },
   {
     id: "apparel",
-    label: "Clothing & apparel",
+    label: "Clothing & apparel (new)",
     blurb: "New garments",
     basis: "value",
     duty: 0.05,
-    band: 1,
   },
   {
     id: "phones",
@@ -184,7 +213,6 @@ export const CARGO_CATEGORIES: CargoCategory[] = [
     blurb: "Handsets and tablets",
     basis: "value",
     duty: 0.05,
-    band: 1,
   },
   {
     id: "watches",
@@ -192,39 +220,44 @@ export const CARGO_CATEGORIES: CargoCategory[] = [
     blurb: "Wristwatches and clocks",
     basis: "value",
     duty: 0.05,
-    band: 1,
   },
   {
     id: "shoes",
     label: "Shoes",
-    blurb: "Minimum fee per pair applies",
+    blurb: "Footwear, new",
     basis: "value",
     duty: 0.1,
-    band: 2,
+    caveat:
+      "A floor of 7,500 LL per pair applies, which can exceed the percentage duty on cheap footwear.",
   },
   {
     id: "bags",
     label: "Handbags & luggage",
-    blurb: "Minimum fee per piece applies",
+    blurb: "Bags and cases",
     basis: "value",
     duty: 0.1,
-    band: 2,
+    caveat: "A floor of 4,500 LL per piece applies.",
   },
   {
-    id: "appliances",
+    id: "appliances-new",
     label: "Appliances (new)",
     blurb: "White goods and small appliances",
     basis: "value",
     duty: 0.15,
-    band: 3,
+  },
+  {
+    id: "perfume",
+    label: "Perfume",
+    blurb: "Perfumes and toilet waters",
+    basis: "value",
+    duty: 0.15,
   },
   {
     id: "cosmetics",
-    label: "Perfume & cosmetics",
-    blurb: "One of the heaviest-taxed categories",
+    label: "Cosmetics & makeup",
+    blurb: "A common diaspora request from German drugstores",
     basis: "value",
     duty: 0.15,
-    band: 3,
   },
   {
     id: "linens",
@@ -232,9 +265,33 @@ export const CARGO_CATEGORIES: CargoCategory[] = [
     blurb: "Bedsheets, towels, household textiles",
     basis: "value",
     duty: 0.15,
-    band: 3,
+    caveat: "A floor of 3,375 LL applies.",
+  },
+  {
+    id: "furniture-new",
+    label: "Furniture (new)",
+    blurb: "New furniture and household articles",
+    basis: "value",
+    duty: 0.3,
+  },
+  {
+    id: "commercial",
+    label: "Commercial stock",
+    blurb: "Goods imported to be resold",
+    basis: "value",
+    duty: 0.465,
+    caveat:
+      "Declared commercially. Requires a legalised commercial invoice and a certificate of origin, which personal-effects shipments do not.",
   },
 ];
+
+/**
+ * Colour band from the duty rate — computed, not hand-assigned, so a new
+ * category can never be given a band that contradicts its own rate.
+ * Five buckets to match the five validated ramp steps.
+ */
+export const bandFor = (duty: number): 0 | 1 | 2 | 3 | 4 =>
+  duty === 0 ? 0 : duty <= 0.05 ? 1 : duty <= 0.1 ? 2 : duty <= 0.15 ? 3 : 4;
 
 export const getCategory = (id: string) =>
   CARGO_CATEGORIES.find((c) => c.id === id) ?? CARGO_CATEGORIES[0];

@@ -13,6 +13,7 @@ import {
   LEBANON_VAT_RATE,
   MIN_CHARGEABLE_KG,
   SECURITY_FEE_RATE,
+  bandFor,
   calculateQuote,
   getCategory,
   whatsappLink,
@@ -25,6 +26,10 @@ const eur = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
+/** 26.5% and 46.5% need a decimal; 5% and 15% should not show one. */
+const pct = (n: number) =>
+  `${Number.isInteger(n * 100) ? (n * 100).toFixed(0) : (n * 100).toFixed(1)}%`;
+
 export default function CalculatorPage() {
   const [destinationId, setDestinationId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string>("used-household");
@@ -36,12 +41,7 @@ export default function CalculatorPage() {
   const byValue = category.basis === "value";
 
   const quote = useMemo(
-    () =>
-      calculateQuote({
-        weightKg: weight,
-        categoryId,
-        declaredValueEur: value,
-      }),
+    () => calculateQuote({ weightKg: weight, categoryId, declaredValueEur: value }),
     [weight, categoryId, value],
   );
 
@@ -79,13 +79,13 @@ export default function CalculatorPage() {
                 key={d.id}
                 type="button"
                 onClick={() => setDestinationId(d.id)}
-                className="group relative overflow-hidden rounded-2xl border border-line p-8 text-left transition-all duration-200 hover:border-transparent hover:shadow-lg"
+                className="group relative overflow-hidden rounded-2xl border border-line p-8 text-left transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
               >
                 <span
                   aria-hidden
                   className="absolute inset-x-0 top-0 h-1.5"
                   style={{
-                    background: `linear-gradient(90deg, ${d.accents[0]} 0 33%, #fff 33% 66%, ${d.accents[1]} 66% 100%)`,
+                    background: `linear-gradient(90deg, ${d.accents[0]} 0 33%, #ffffff 33% 66%, ${d.accents[1]} 66% 100%)`,
                   }}
                 />
                 <span className="display block text-4xl">{d.name}</span>
@@ -99,7 +99,7 @@ export default function CalculatorPage() {
             ))}
           </div>
 
-          <p className="mt-8 max-w-[60ch] text-sm text-muted">
+          <p className="mt-8 max-w-[62ch] text-sm text-muted">
             Lebanon is the only destination here for now — it is the only
             corridor we have full customs data for. Adding a country means
             researching its duty tables properly, not just adding it to a list.
@@ -114,7 +114,7 @@ export default function CalculatorPage() {
     <div className="min-h-svh pb-36 lg:pb-0">
       <Header />
 
-      {/* Destination banner — the country is the headline, per its flag colours. */}
+      {/* Destination banner — the country is the headline, in its flag colours. */}
       <section
         className="relative overflow-hidden border-b border-line"
         style={{
@@ -128,9 +128,7 @@ export default function CalculatorPage() {
               <h1 className="display mt-2 text-[clamp(3rem,13vw,8rem)] leading-[0.85]">
                 {destination.name}
               </h1>
-              <p className="mt-3 text-sm text-muted">
-                via {destination.gateway}
-              </p>
+              <p className="mt-3 text-sm text-muted">via {destination.gateway}</p>
             </div>
             <button
               type="button"
@@ -150,15 +148,58 @@ export default function CalculatorPage() {
         />
       </section>
 
-      <main className="mx-auto max-w-[1100px] px-6 py-12 lg:px-10 lg:py-16">
+      <main className="mx-auto max-w-[1100px] px-6 py-10 lg:px-10 lg:py-14">
+        {/* ---- How it works: first, not last. The two rules below decide
+               which inputs even apply, so reading them after the sliders is
+               backwards. ---- */}
+        <section className="rounded-2xl border border-line bg-bg-alt p-6 lg:p-8">
+          <h2 className="display text-lg lg:text-xl">
+            Read this first — two rules decide your cost
+          </h2>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="rounded-xl bg-bg p-5">
+              <span
+                className="inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white"
+                style={{ background: BAND_COLORS[4] }}
+              >
+                Used goods
+              </span>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Taxed <strong className="text-fg">by weight</strong>. Customs
+                applies a deemed value per kilo, so what the contents are
+                actually worth changes nothing. Declared value is ignored.
+              </p>
+            </div>
+            <div className="rounded-xl bg-bg p-5">
+              <span
+                className="inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white"
+                style={{ background: BAND_COLORS[1] }}
+              >
+                New goods
+              </span>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Taxed <strong className="text-fg">by value</strong>, at a rate
+                set by the commodity — laptops come in duty free, perfume and
+                cosmetics are among the heaviest.
+              </p>
+            </div>
+          </div>
+          <p className="mt-5 text-xs leading-relaxed text-muted">
+            Freight is charged on weight in both cases, and clearance is a flat
+            fee per consignment. This is an estimate, not a quote — rates here
+            date from {CUSTOMS_DATA_AS_OF} and need re-confirmation. Final duty
+            is assessed by Lebanese customs, not by us, and we are not taking
+            bookings yet.
+          </p>
+        </section>
+
         {/* ---- Category ---- */}
-        <h2 className="display text-[clamp(1.4rem,3.5vw,2rem)]">
+        <h2 className="display mt-14 text-[clamp(1.4rem,3.5vw,2rem)]">
           What are you sending?
         </h2>
         <p className="measure mt-2 text-sm text-muted">
-          Lebanese customs charges a different rate for every commodity — and
-          taxes used goods by weight rather than by what they are worth. Pick the
-          closest match.
+          Lebanese customs charges a different rate for every commodity. Pick the
+          closest match — the percentage shown is its duty rate.
         </p>
 
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,7 +211,7 @@ export default function CalculatorPage() {
                 type="button"
                 onClick={() => setCategoryId(c.id)}
                 aria-pressed={on}
-                className={`relative overflow-hidden rounded-xl border p-5 text-left transition-all duration-200 ${
+                className={`relative overflow-hidden rounded-xl border p-5 pl-6 text-left transition-all duration-200 ${
                   on
                     ? "border-fg/30 bg-bg-alt shadow-sm"
                     : "border-line hover:border-fg/25"
@@ -179,49 +220,51 @@ export default function CalculatorPage() {
                 <span
                   aria-hidden
                   className="absolute inset-y-0 left-0 w-1.5"
-                  style={{ background: BAND_COLORS[c.band] }}
+                  style={{ background: BAND_COLORS[bandFor(c.duty)] }}
                 />
-                <span className="ml-2 block">
-                  <span className="flex items-baseline justify-between gap-3">
-                    <span className="display text-lg leading-tight">
-                      {c.label}
-                    </span>
-                    <span
-                      className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold text-white tabular-nums"
-                      style={{ background: BAND_COLORS[c.band] }}
-                    >
-                      {(c.duty * 100).toFixed(c.duty === 0.265 ? 1 : 0)}%
-                    </span>
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="display text-lg leading-tight">{c.label}</span>
+                  <span
+                    className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums text-white"
+                    style={{ background: BAND_COLORS[bandFor(c.duty)] }}
+                  >
+                    {pct(c.duty)}
                   </span>
-                  <span className="mt-1.5 block text-xs leading-relaxed text-muted">
-                    {c.blurb}
-                  </span>
-                  <span className="mt-3 block text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-                    {c.basis === "weight" ? "Taxed by weight" : "Taxed by value"}
-                  </span>
+                </span>
+                <span className="mt-1.5 block text-xs leading-relaxed text-muted">
+                  {c.blurb}
+                </span>
+                <span className="mt-3 block text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                  {c.basis === "weight" ? "Taxed by weight" : "Taxed by value"}
                 </span>
               </button>
             );
           })}
         </div>
-        <p className="mt-4 text-xs text-muted">
-          Percentages are the customs duty rate.
-          {" "}
-          {byValue
-            ? `${(LEBANON_VAT_RATE * 100).toFixed(0)}% VAT and a ${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee are added on top.`
-            : `A ${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee is added on top.`}
-        </p>
+
+        {category.caveat && (
+          <p className="mt-5 rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed">
+            <strong>{category.label}:</strong> {category.caveat}
+          </p>
+        )}
 
         {/* ---- Inputs + result ---- */}
-        <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
+        <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
           <div className="space-y-9">
+            {/* Weight always applies — it drives freight in every case, and
+                duty as well when the category is weight-based. */}
             <div>
-              <label htmlFor="weight" className="text-sm font-semibold">
-                Weight
-                <span className="ml-2 font-normal tabular-nums text-muted">
-                  {weight} kg
-                </span>
-              </label>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <label htmlFor="weight" className="text-sm font-semibold">
+                  Weight
+                  <span className="ml-2 font-normal tabular-nums text-muted">
+                    {weight} kg
+                  </span>
+                </label>
+                <Drives
+                  parts={byValue ? ["Freight"] : ["Freight", "Duty"]}
+                />
+              </div>
               <input
                 id="weight"
                 type="range"
@@ -244,46 +287,58 @@ export default function CalculatorPage() {
               )}
             </div>
 
-            {byValue && (
-              <div>
+            {/* Declared value is shown either way, but disabled when the
+                category is taxed by weight — hiding it would leave people
+                wondering where it went; greying it out says why. */}
+            <div className={byValue ? "" : "opacity-55"}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <label htmlFor="value" className="text-sm font-semibold">
                   Declared value
                   <span className="ml-2 font-normal tabular-nums text-muted">
-                    {eur(value)}
+                    {byValue ? eur(value) : "—"}
                   </span>
                 </label>
-                <input
-                  id="value"
-                  type="range"
-                  min={50}
-                  max={10000}
-                  step={50}
-                  value={value}
-                  onChange={(e) => setValue(Number(e.target.value))}
-                  className="mt-4 w-full accent-[var(--accent)]"
-                />
-                <p className="mt-3 text-xs text-muted">
-                  Duty on new goods follows what they are worth, so this figure
-                  changes the result.
-                </p>
+                {byValue ? (
+                  <Drives parts={["Duty"]} />
+                ) : (
+                  <span className="rounded-full border border-line px-2.5 py-1 text-[0.65rem] uppercase tracking-wider text-muted">
+                    Not used
+                  </span>
+                )}
               </div>
-            )}
-
-            {!byValue && (
-              <p className="rounded-xl border border-line bg-bg-alt p-5 text-xs leading-relaxed text-muted">
-                <strong className="text-fg">No value needed.</strong> Used
-                household goods are assessed at a deemed value per kilo, so what
-                the contents are worth does not change the duty. Weight is the
-                whole tax base.
-              </p>
-            )}
+              <input
+                id="value"
+                type="range"
+                min={50}
+                max={10000}
+                step={50}
+                value={value}
+                disabled={!byValue}
+                aria-describedby={byValue ? undefined : "value-disabled"}
+                onChange={(e) => setValue(Number(e.target.value))}
+                className="mt-4 w-full accent-[var(--accent)] disabled:cursor-not-allowed"
+              />
+              {byValue ? (
+                <p className="mt-3 text-xs text-muted">
+                  Duty on {category.label.toLowerCase()} follows what the goods
+                  are worth, at {pct(category.duty)} plus{" "}
+                  {pct(LEBANON_VAT_RATE)} VAT and {pct(SECURITY_FEE_RATE)}{" "}
+                  security fee.
+                </p>
+              ) : (
+                <p id="value-disabled" className="mt-3 text-xs text-muted">
+                  Switched off because{" "}
+                  <strong className="text-fg">
+                    {category.label.toLowerCase()}
+                  </strong>{" "}
+                  are assessed on a deemed value per kilo. Changing this figure
+                  could not change the duty, so it does not apply here.
+                </p>
+              )}
+            </div>
 
             <div className="lg:hidden">
-              <Result
-                quote={quote}
-                segments={segments}
-                totalForBar={totalForBar}
-              />
+              <Result quote={quote} segments={segments} totalForBar={totalForBar} />
             </div>
           </div>
 
@@ -299,36 +354,6 @@ export default function CalculatorPage() {
             </a>
           </aside>
         </div>
-
-        <section className="mt-16 rounded-2xl border border-line p-7 lg:p-8">
-          <h2 className="display text-xl">How this is calculated</h2>
-          <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
-            <li>
-              <strong className="text-fg">Used goods are taxed by weight.</strong>{" "}
-              Lebanese customs values used household goods at a deemed rate per
-              kilo rather than what you say they are worth, so a heavy box of old
-              clothes and a light box of good ones are taxed the same.
-            </li>
-            <li>
-              <strong className="text-fg">New goods are taxed by value,</strong>{" "}
-              at a rate that depends on the commodity — laptops come in duty
-              free, perfume and cosmetics are among the heaviest.
-            </li>
-            <li>
-              <strong className="text-fg">
-                Clearance is a flat fee per consignment.
-              </strong>{" "}
-              Broker, stamp duty, handling and deconsolidation do not scale with
-              weight, which is why small shipments have a minimum.
-            </li>
-            <li>
-              <strong className="text-fg">This is an estimate, not a quote.</strong>{" "}
-              Customs rates in use here date from {CUSTOMS_DATA_AS_OF} and need
-              re-confirmation. Final duty is assessed by Lebanese customs, not by
-              us. We are not taking bookings yet.
-            </li>
-          </ul>
-        </section>
       </main>
 
       {/* Sticky mobile summary — the figure must stay on screen while the
@@ -336,7 +361,7 @@ export default function CalculatorPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 px-5 py-3.5 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+            <p className="truncate text-[0.65rem] uppercase tracking-[0.18em] text-muted">
               {destination.name} · {weight} kg
             </p>
             <p className="display truncate text-2xl leading-tight tabular-nums">
@@ -356,6 +381,33 @@ export default function CalculatorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Which line items an input actually moves, colour-keyed to the cost bar. */
+function Drives({ parts }: { parts: ("Freight" | "Duty")[] }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="text-[0.65rem] uppercase tracking-wider text-muted">
+        Sets
+      </span>
+      {parts.map((p) => (
+        <span
+          key={p}
+          className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[0.65rem] font-medium"
+        >
+          <span
+            aria-hidden
+            className="h-2 w-2 rounded-full"
+            style={{
+              background:
+                p === "Freight" ? COST_COLORS.freight : COST_COLORS.duty,
+            }}
+          />
+          {p}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -396,14 +448,11 @@ function Result({
       </p>
 
       {/* Stacked cost bar. Every segment is direct-labelled below, so identity
-          never rests on colour alone — which the palette's contrast warning
-          requires. 2px surface gaps separate the fills. */}
+          never rests on colour alone. 2px surface gaps separate the fills. */}
       <div
         className="mt-7 flex h-3 w-full overflow-hidden rounded-full"
         role="img"
-        aria-label={segments
-          .map((s) => `${s.key} ${eur(s.amount)}`)
-          .join(", ")}
+        aria-label={segments.map((s) => `${s.key} ${eur(s.amount)}`).join(", ")}
       >
         {segments.map((s, i) => (
           <span
