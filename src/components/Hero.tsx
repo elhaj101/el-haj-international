@@ -100,7 +100,12 @@ export default function Hero() {
           priority
           unoptimized
           sizes="100vw"
-          className="object-cover object-center"
+          // Source is a tall drone portrait (1440x2912) with the ship sitting
+          // about a quarter of the way down. On a wide desktop crop,
+          // object-center would land on open water and miss the ship entirely
+          // — bias the focal point to where the subject actually is.
+          className="object-cover"
+          style={{ objectPosition: "50% 24%" }}
         />
       </div>
 
