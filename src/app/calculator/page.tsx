@@ -79,21 +79,22 @@ export default function CalculatorPage() {
                 key={d.id}
                 type="button"
                 onClick={() => setDestinationId(d.id)}
-                className="group relative overflow-hidden rounded-2xl border border-line p-8 text-left transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
+                className="group flex items-center gap-5 rounded-2xl border border-line p-6 text-left transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
               >
                 <span
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-1.5"
-                  style={{
-                    background: `linear-gradient(90deg, ${d.accents[0]} 0 33%, #ffffff 33% 66%, ${d.accents[1]} 66% 100%)`,
-                  }}
-                />
-                <span className="display block text-4xl">{d.name}</span>
-                <span className="mt-2 block text-sm text-muted">
-                  via {d.gateway}
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line bg-bg-alt text-3xl leading-none"
+                >
+                  {d.flag}
                 </span>
-                <span className="mt-6 block text-sm text-accent">
-                  Start estimate →
+                <span>
+                  <span className="display block text-3xl">{d.name}</span>
+                  <span className="mt-1 block text-sm text-muted">
+                    via {d.gateway}
+                  </span>
+                  <span className="mt-3 block text-sm text-accent">
+                    Start estimate →
+                  </span>
                 </span>
               </button>
             ))}
@@ -114,21 +115,30 @@ export default function CalculatorPage() {
     <div className="min-h-svh pb-36 lg:pb-0">
       <Header />
 
-      {/* Destination banner — the country is the headline, in its flag colours. */}
-      <section
-        className="relative overflow-hidden border-b border-line"
-        style={{
-          background: `linear-gradient(135deg, ${destination.accents[0]}14, transparent 55%, ${destination.accents[1]}18)`,
-        }}
-      >
+      {/* Destination banner. A two-colour gradient wash plus a tricolour
+          stripe used to sit here, built from an approximated flag palette
+          (plain red/green for Lebanon, which isn't even the real flag) — busy
+          and, per feedback, confusing rather than clarifying. A small, correct
+          flag badge replaces both. */}
+      <section className="border-b border-line bg-bg-alt">
         <div className="mx-auto max-w-[1100px] px-6 py-10 lg:px-10 lg:py-14">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="eyebrow">Shipping to</p>
-              <h1 className="display mt-2 text-[clamp(3rem,13vw,8rem)] leading-[0.85]">
-                {destination.name}
-              </h1>
-              <p className="mt-3 text-sm text-muted">via {destination.gateway}</p>
+            <div className="flex items-center gap-5">
+              <span
+                aria-hidden
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-line bg-bg text-4xl leading-none shadow-sm lg:h-20 lg:w-20 lg:text-5xl"
+              >
+                {destination.flag}
+              </span>
+              <div>
+                <p className="eyebrow">Shipping to</p>
+                <h1 className="display mt-1 text-[clamp(2.5rem,9vw,6rem)] leading-[0.9]">
+                  {destination.name}
+                </h1>
+                <p className="mt-2 text-sm text-muted">
+                  via {destination.gateway}
+                </p>
+              </div>
             </div>
             <button
               type="button"
@@ -139,13 +149,6 @@ export default function CalculatorPage() {
             </button>
           </div>
         </div>
-        <span
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-1"
-          style={{
-            background: `linear-gradient(90deg, ${destination.accents[0]} 0 33%, #f7f5f2 33% 66%, ${destination.accents[1]} 66% 100%)`,
-          }}
-        />
       </section>
 
       <main className="mx-auto max-w-[1100px] px-6 py-10 lg:px-10 lg:py-14">

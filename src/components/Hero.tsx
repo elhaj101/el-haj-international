@@ -95,6 +95,15 @@ export default function Hero() {
             scrub: true,
           },
         });
+
+        // Each chevron dims and brightens in turn, top to bottom — a wave
+        // travelling downward, not a static icon.
+        gsap.to(".scroll-chevron", {
+          opacity: (i, t) => Number(t.getAttribute("opacity")) * 0.25,
+          duration: 0.6,
+          stagger: { each: 0.15, repeat: -1, yoyo: true },
+          ease: "sine.inOut",
+        });
       });
     },
     { scope: root },
@@ -147,8 +156,9 @@ export default function Hero() {
             matters to you
           </h1>
           <p className="hero-fade measure mt-6 text-base leading-relaxed text-white/75 lg:text-lg">
-            Consolidated container shipping and trading between Europe and the
-            Middle East.
+            Consolidated container shipping and trading between{" "}
+            <strong className="font-semibold text-white">Europe</strong> and{" "}
+            <strong className="font-semibold text-white">the Middle East</strong>.
           </p>
           <div className="hero-fade mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
             <a
@@ -174,10 +184,44 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="hero-fade absolute bottom-6 right-6 hidden items-center gap-3 text-[0.65rem] tracking-[0.25em] text-white/60 uppercase sm:flex lg:right-10">
-        Scroll
-        <span className="block h-8 w-px bg-white/40" />
-      </div>
+      {/* Triple chevron, white with a graduated transparency fade rather than
+          the word "Scroll" + a line. The three strokes read as motion on
+          their own; a slow staggered pulse (skipped under reduced motion)
+          reinforces the downward direction without relying on text. */}
+      <svg
+        className="scroll-cue hero-fade absolute bottom-6 right-6 hidden h-8 w-5 sm:block lg:right-10"
+        viewBox="0 0 20 32"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          className="scroll-chevron"
+          d="M2 2l8 8 8-8"
+          stroke="white"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="1"
+        />
+        <path
+          className="scroll-chevron"
+          d="M2 12l8 8 8-8"
+          stroke="white"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.6"
+        />
+        <path
+          className="scroll-chevron"
+          d="M2 22l8 8 8-8"
+          stroke="white"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.3"
+        />
+      </svg>
     </section>
   );
 }

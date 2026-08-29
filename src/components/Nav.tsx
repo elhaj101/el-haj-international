@@ -39,7 +39,10 @@ export default function Nav() {
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
         solid
           ? "border-b border-line bg-bg/85 text-fg backdrop-blur-md"
-          : "border-b border-transparent text-white"
+          : // Faint dark wash, not a solid bar — just enough that the white
+            // logo and links hold contrast over a bright sky before the
+            // scroll-solid state kicks in.
+            "border-b border-transparent bg-gradient-to-b from-black/35 via-black/10 to-transparent text-white"
       }`}
     >
       <nav className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-4 lg:px-10">
