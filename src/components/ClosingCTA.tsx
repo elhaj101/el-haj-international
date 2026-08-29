@@ -75,7 +75,7 @@ export default function ClosingCTA() {
         <div className="relative overflow-hidden rounded-3xl bg-bg-alt">
           <div className="cta-photo absolute inset-0">
             <Image
-              src={asset("/closing-port.jpg")}
+              src={asset("/closing-port.webp")}
               alt=""
               fill
               unoptimized

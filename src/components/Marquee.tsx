@@ -43,12 +43,17 @@ export default function Marquee() {
         trigger: root.current,
         start: "top bottom",
         end: "bottom top",
+        // A `repeat: -1` strip keeps animating off-screen otherwise, costing
+        // frames on sections where nothing about it is visible.
+        onToggle: ({ isActive }) => (isActive ? tween.play() : tween.pause()),
         onUpdate: (self) => {
           // Scrubbing fast speeds the strip up and flips it with direction.
           const boost = 1 + Math.min(Math.abs(self.getVelocity()) / 900, 4);
           tween.timeScale(self.direction * boost);
         },
       });
+      // Starts paused; the trigger plays it the moment the strip is in view.
+      tween.pause();
     },
     { scope: root },
   );

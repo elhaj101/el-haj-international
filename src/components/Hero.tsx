@@ -132,7 +132,7 @@ export default function Hero() {
           // this file at all.
           preload="none"
           aria-hidden="true"
-          poster={asset("/hero-ship-poster.jpg")}
+          poster={asset("/hero-ship-poster.webp")}
           className="h-full w-full object-cover"
           style={{ objectPosition: "50% 37%" }}
         >

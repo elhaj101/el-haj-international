@@ -17,6 +17,13 @@ import { asset } from "@/lib/asset";
  * scratch script `make_logo.py` in the session notes for how they were cut.
  */
 
+/**
+ * Artwork is WebP, resized to what the page actually renders. The PNG exports
+ * were 1400x314 and 512x377 and were being drawn at 178x40 and 76x56 — roughly
+ * 6x more pixels per axis than any screen could show, decoded on every load.
+ * The originals stay in the repo as the masters; re-cut from those, not these.
+ * 390KB of logo became 69KB with nothing visibly different.
+ */
 const LOCKUP_RATIO = 1400 / 314;
 const ICON_RATIO = 512 / 377;
 
@@ -37,7 +44,7 @@ export function ContainerMark({
   return (
     <span className={`relative inline-block ${className}`}>
       <Image
-        src={asset(light ? "/logo-icon-light.png" : "/logo-icon.png")}
+        src={asset(light ? "/logo-icon-light.webp" : "/logo-icon.webp")}
         alt=""
         fill
         priority={priority}
@@ -69,7 +76,7 @@ export function Wordmark({
       style={{ height: h, width: h * LOCKUP_RATIO }}
     >
       <Image
-        src={asset(light ? "/logo-lockup-light.png" : "/logo-lockup.png")}
+        src={asset(light ? "/logo-lockup-light.webp" : "/logo-lockup.webp")}
         alt="El Haj International — Shipping · Trading"
         fill
         priority
@@ -101,7 +108,7 @@ export function WordmarkSwap({
       {[false, true].map((isLight) => (
         <Image
           key={String(isLight)}
-          src={asset(isLight ? "/logo-lockup-light.png" : "/logo-lockup.png")}
+          src={asset(isLight ? "/logo-lockup-light.webp" : "/logo-lockup.webp")}
           alt={isLight ? "" : "El Haj International — Shipping · Trading"}
           aria-hidden={isLight || undefined}
           fill

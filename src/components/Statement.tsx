@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -37,20 +36,33 @@ export default function Statement() {
         return;
       }
 
-      // Idle sway — independent of scroll position.
-      gsap.to(".swing-idle", {
-        rotate: 2.2,
-        duration: 3.4,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-      });
-      gsap.to(".swing-idle", {
-        y: 14,
-        duration: 2.6,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
+      // Idle sway — independent of scroll position, but NOT independent of
+      // whether anyone can see it. These are `repeat: -1`, so left alone they
+      // animate for the entire session while the visitor reads a section three
+      // screens away, taking a slice of every frame budget for nothing. Gated
+      // to the section's own viewport window below.
+      const idle = [
+        gsap.to(".swing-idle", {
+          rotate: 2.2,
+          duration: 3.4,
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+        }),
+        gsap.to(".swing-idle", {
+          y: 14,
+          duration: 2.6,
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+        }),
+      ];
+      ScrollTrigger.create({
+        trigger: root.current,
+        start: "top bottom",
+        end: "bottom top",
+        onToggle: ({ isActive }) =>
+          idle.forEach((t) => (isActive ? t.play() : t.pause())),
       });
 
       const split = new SplitText(".statement-h2", { type: "words" });
@@ -99,14 +111,31 @@ export default function Statement() {
           used vmin and rendered about 240px wide on a handset. */}
       <div className="swing-travel pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
         <div className="swing-idle relative aspect-[1531/975] w-[105vw] max-w-none sm:w-[85vw] lg:w-[62vw]">
-          <Image
-            src={asset("/container.png")}
-            alt=""
-            fill
-            unoptimized
-            sizes="(max-width: 640px) 105vw, (max-width: 1024px) 85vw, 62vw"
-            className="object-contain"
-          />
+          {/* Hand-written <picture>, not next/image. `unoptimized` is forced
+              by the static export, and it emits no srcset — so a 390px phone
+              was fetching and, more importantly, *decoding* the full
+              1531x975 frame.
+
+              File size is not the cost that bites here: a decoded bitmap is
+              width x height x 4 bytes whatever the encoding, and this image is
+              scrubbed across a pinned section, so it sits in GPU memory the
+              whole time it moves. ~6MB of texture became ~2MB on phones —
+              exactly the devices least able to spare it. Desktop keeps the
+              full frame; at 62vw of a wide viewport 1531px is already the
+              minimum that holds up. */}
+          <picture>
+            <source
+              media="(max-width: 640px)"
+              srcSet={asset("/container-900.webp")}
+            />
+            <img
+              src={asset("/container.webp")}
+              alt=""
+              width={1531}
+              height={975}
+              className="absolute inset-0 h-full w-full object-contain"
+            />
+          </picture>
         </div>
       </div>
 

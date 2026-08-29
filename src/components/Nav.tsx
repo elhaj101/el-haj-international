@@ -47,10 +47,15 @@ export default function Nav() {
         }`}
       />
 
+      {/* No backdrop-blur here, deliberately. A fixed, full-width blur is
+          recomposited on every scrolled frame — one of the most expensive
+          things a scrolling page can ask a phone GPU for — and it sat behind
+          an almost-opaque background, so it bought close to nothing visually.
+          Traded for bg-bg/95: same look, none of the per-frame cost. */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
           solid
-            ? "border-b border-line bg-bg/85 text-fg backdrop-blur-md"
+            ? "border-b border-line bg-bg/95 text-fg"
             : "text-white"
         }`}
       >
