@@ -94,11 +94,226 @@ export const CLEARANCE_FEE_EUR = 65;
  */
 export const MIN_CHARGEABLE_KG = 30;
 
-/** Estimates are shown as a range, never a single hard number. */
+/**
+ * Estimates are shown as a range, never a single hard number.
+ * Business shipments only — a flat box price is not an estimate, so the
+ * personal path below deliberately does not use this.
+ */
 export const ESTIMATE_SPREAD = 0.12;
 
 /* -------------------------------------------------------------------
-   CALCULATION
+   (C) PERSONAL PARCEL PRICING  —  ⚠️ ALL PLACEHOLDERS ⚠️
+
+   A completely different product from the business path above. A person
+   sending three boxes to family does not want a duty table; they want
+   one number. So this is flat: pick a box size and a count, or give a
+   weight and pay a flat rate per kilo — whichever suits the parcel.
+
+   *** THE FOUR PRICES BELOW ARE BENCHMARKS, NOT OUR RATES. ***
+   The box sizes and the per-kg rate are prevailing market figures on
+   this corridor, used to get the shape of the model right. All four
+   must be replaced with our own before this page quotes a real
+   customer. Nothing here has been through a costing exercise.
+
+   Deliberately NOT modelled here: container cost, packing efficiency,
+   cost per box, profit and margin. This file ships to a public page, so
+   unit economics do not belong in it — that analysis lives in internal
+   tooling, kept out of this repository.
+   ------------------------------------------------------------------- */
+
+/** Money is rounded to the cent everywhere in this file. */
+const round = (n: number) => Math.round(n * 100) / 100;
+
+/** Which of the two calculators the visitor is looking at. */
+export type ShipmentProfile = "personal" | "business";
+
+/** Personal parcels price one of two ways, customer's choice. */
+export type PersonalMode = "boxes" | "perkg";
+
+export interface BoxSize {
+  id: string;
+  label: string;
+  /** Outer dimensions in cm — the source of both `dims` and the 3D model. */
+  w: number;
+  h: number;
+  d: number;
+  volumeM3: number;
+  /** PLACEHOLDER — flat price for this box, whatever it weighs. */
+  priceEur: number;
+  note?: string;
+}
+
+/**
+ * `w × d × h` is how the flyer prints them (length, width, height), so
+ * height is the third number, not the second. The 3D model reads these
+ * fields directly — nothing parses the display string.
+ */
+export const BOX_SIZES: BoxSize[] = [
+  { id: "M", label: "M", w: 40, d: 30, h: 30, volumeM3: 0.036, priceEur: 40 },
+  { id: "L", label: "L", w: 60, d: 38, h: 38, volumeM3: 0.0866, priceEur: 60 },
+  { id: "XXL", label: "XXL", w: 75, d: 42, h: 41, volumeM3: 0.1291, priceEur: 75 },
+];
+
+/** "60 × 38 × 38 cm", built from the real numbers so the two can't drift. */
+export const boxDims = (b: BoxSize) => `${b.w} × ${b.d} × ${b.h} cm`;
+
+export const getBoxSize = (id: string) =>
+  BOX_SIZES.find((b) => b.id === id) ?? BOX_SIZES[1];
+
+/** PLACEHOLDER — flat per-kilo price, the alternative to a box price. */
+export const PERSONAL_PER_KG_EUR = 2.5;
+
+/** Most people send a handful of boxes, not a pallet. */
+export const MAX_PERSONAL_BOXES = 15;
+
+/**
+ * Typical packed density of a mixed household box, kg per m³. A physical
+ * rule of thumb, not a rate: it exists only to answer "roughly what does
+ * a box this size hold?", which is what makes the box-vs-per-kg
+ * comparison below possible. Not a user-facing control — a customer
+ * should not have to estimate their own packing density to get a price.
+ */
+export const TYPICAL_DENSITY_KG_PER_M3 = 320;
+
+/** Roughly what a box of this size holds, in kg, when normally packed. */
+export const typicalBoxKg = (box: BoxSize) =>
+  Math.round(box.volumeM3 * TYPICAL_DENSITY_KG_PER_M3);
+
+export interface PersonalQuoteInput {
+  mode: PersonalMode;
+  /**
+   * Which box. Prices the parcel in "boxes" mode; in "perkg" mode it is
+   * only the reference size for the "that weight fills about N boxes"
+   * comparison, and does not affect the price.
+   */
+  boxId?: string;
+  /** "boxes" mode. */
+  numBoxes?: number;
+  /** "perkg" mode. */
+  weightKg?: number;
+  /** Id from CARGO_CATEGORIES — sets the duty rate. */
+  categoryId?: string;
+}
+
+export interface PersonalQuote {
+  /** What the customer pays us. Flat and exact — never a range. */
+  shippingEur: number;
+  /** The parcel's weight, actual or implied. The duty base. */
+  weightKg: number;
+  /** What Lebanese customs may assess on arrival. NOT paid to us. */
+  dutyEur: number;
+  /** shippingEur + dutyEur — the realistic all-in figure. */
+  totalEur: number;
+  /** One-line plain-English statement of how the shipping price was reached. */
+  basis: string;
+  /** Same, for the duty figure. */
+  dutyBasis: string;
+  /**
+   * What the same parcel would cost on the other pricing mode, so the
+   * customer can see which suits them. Shipping only — duty does not
+   * change with how the shipping is priced. Null when there is nothing
+   * meaningful to compare (e.g. a zero-weight input).
+   */
+  alternativeEur: number | null;
+  alternativeLabel: string;
+}
+
+/**
+ * Duty on a personal parcel, from weight alone.
+ *
+ * Lebanese customs assesses personal effects on a *deemed* value per kilo
+ * rather than on what the sender says the contents are worth — which is
+ * exactly why this path needs no declared-value input. The category only
+ * supplies the rate; the weight supplies the base.
+ *
+ * Extrapolation to flag: the deemed-valuation method is documented for
+ * used household goods (see DEEMED_VALUATION_USD_PER_KG). Applying it to
+ * the other categories' rates is our own simplification for a
+ * consumer-facing estimate, not something the FIDI guide states. The UI
+ * says so. VAT is deliberately not stacked on here — the deemed-value
+ * treatment in the source is duty + security fee.
+ */
+function personalDuty(weightKg: number, categoryId?: string) {
+  const category = getCategory(categoryId ?? "used-household");
+  const deemedEur = weightKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
+  const dutyEur = round(deemedEur * (category.duty + SECURITY_FEE_RATE));
+
+  const dutyBasis =
+    category.duty === 0
+      ? `${category.label} come in duty free — this is the ` +
+        `${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee only, on a deemed ` +
+        `value of USD ${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg for ~${weightKg} kg.`
+      : `~${weightKg} kg at a deemed value of USD ` +
+        `${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg, charged at ` +
+        `${(category.duty * 100).toFixed(1).replace(/\.0$/, "")}% for ` +
+        `${category.label.toLowerCase()} plus a ` +
+        `${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee.`;
+
+  return { dutyEur, dutyBasis };
+}
+
+export function calculatePersonalQuote(
+  input: PersonalQuoteInput,
+): PersonalQuote {
+  if (input.mode === "boxes") {
+    const box = getBoxSize(input.boxId ?? "L");
+    const numBoxes = Math.max(1, Math.round(input.numBoxes || 1));
+    const shippingEur = round(numBoxes * box.priceEur);
+
+    // Weight is implied from the box size, at a typical fill.
+    const weightKg = typicalBoxKg(box) * numBoxes;
+    const { dutyEur, dutyBasis } = personalDuty(weightKg, input.categoryId);
+
+    // What the same parcel would cost per kilo.
+    const alternativeEur = round(weightKg * PERSONAL_PER_KG_EUR);
+
+    return {
+      shippingEur,
+      weightKg,
+      dutyEur,
+      totalEur: round(shippingEur + dutyEur),
+      basis:
+        (numBoxes === 1
+          ? `One ${box.label} box at a flat €${box.priceEur}.`
+          : `${numBoxes} × ${box.label} boxes at a flat €${box.priceEur} each.`) +
+        ` The price is the same whatever it weighs.`,
+      dutyBasis,
+      alternativeEur,
+      alternativeLabel:
+        `A normally packed ${box.label} box holds about ${typicalBoxKg(box)} kg, ` +
+        `so ${numBoxes === 1 ? "this" : "these"} would be roughly ${weightKg} kg ` +
+        `— €${alternativeEur.toFixed(0)} at €${PERSONAL_PER_KG_EUR.toFixed(2)}/kg.`,
+    };
+  }
+
+  const weightKg = Math.max(0, input.weightKg || 0);
+  const shippingEur = round(weightKg * PERSONAL_PER_KG_EUR);
+  const { dutyEur, dutyBasis } = personalDuty(weightKg, input.categoryId);
+
+  // The cheapest whole number of boxes that would hold this weight.
+  const box = getBoxSize(input.boxId ?? "L");
+  const perBoxKg = typicalBoxKg(box);
+  const boxesNeeded = perBoxKg > 0 ? Math.ceil(weightKg / perBoxKg) : 0;
+  const alternativeEur = boxesNeeded > 0 ? round(boxesNeeded * box.priceEur) : null;
+
+  return {
+    shippingEur,
+    weightKg,
+    dutyEur,
+    totalEur: round(shippingEur + dutyEur),
+    basis: `${weightKg} kg at a flat €${PERSONAL_PER_KG_EUR.toFixed(2)} per kilo.`,
+    dutyBasis,
+    alternativeEur,
+    alternativeLabel:
+      alternativeEur === null
+        ? ""
+        : `That weight normally fills about ${boxesNeeded} ${box.label} ` +
+          `box${boxesNeeded === 1 ? "" : "es"} — €${alternativeEur.toFixed(0)} at the flat box price.`,
+  };
+}
+
+/* -------------------------------------------------------------------
+   BUSINESS CALCULATION
    ------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------
@@ -340,8 +555,6 @@ export interface QuoteBreakdown {
   rangeLowEur: number;
   rangeHighEur: number;
 }
-
-const round = (n: number) => Math.round(n * 100) / 100;
 
 export function calculateQuote(input: QuoteInput): QuoteBreakdown {
   const weight = Math.max(0, input.weightKg || 0);

@@ -135,6 +135,72 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------
+   3D parcel model (calculator, personal tab)
+
+   A real cuboid built from six transformed faces rather than a WebGL
+   canvas: it is a box. Three.js would be ~600KB of dependency on a
+   statically exported marketing site to draw six rectangles.
+
+   `--box-scale` is px per centimetre, so the three box sizes stay
+   correctly proportioned to each other — an XXL really is drawn twice
+   the length of an M. Shrinking it on small screens is a one-line
+   change here rather than a resize listener in JS.
+   --------------------------------------------------------------- */
+.box-scene {
+  --box-scale: 2.5px;
+  perspective: 900px;
+  height: 210px;
+}
+
+@media (max-width: 640px) {
+  .box-scene {
+    --box-scale: 1.65px;
+    height: 150px;
+  }
+}
+
+.box-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: box-spin 26s linear infinite;
+}
+
+.box-face {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(90, 62, 38, 0.35);
+  /* Faces resize and re-seat when the chosen box changes; the tween is
+     what makes toggling M -> XXL read as the same object growing. */
+  transition:
+    width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes box-spin {
+  from {
+    transform: rotateX(-16deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-16deg) rotateY(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box-cube {
+    animation: none;
+    /* Held at a three-quarter view — still legibly a box, never moving. */
+    transform: rotateX(-16deg) rotateY(-32deg);
+  }
+  .box-face {
+    transition: none;
+  }
+}
+
 ::selection {
   background: var(--accent);
   color: #fff;
