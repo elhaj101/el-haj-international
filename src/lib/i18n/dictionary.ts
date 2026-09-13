@@ -1,0 +1,362 @@
+/**
+ * The shape every locale dictionary must satisfy. One file per locale
+ * (en.ts / ar.ts / de.ts) implements this in full — TypeScript's structural
+ * checking means a missing or mistyped key fails `tsc`, not a silent blank
+ * spot on the page.
+ *
+ * A handful of English sentences wrap one phrase in <strong> mid-sentence
+ * (Hero's "between **Europe** and **the Middle East**", BusinessCalculator's
+ * "Taxed **by weight**" / "**by value**"). Word order isn't guaranteed to
+ * survive translation, so those specific fields are arrays of segments
+ * instead of one string — each locale supplies its own segments, in
+ * whatever order that language actually reads in. Everything else is a
+ * plain string.
+ */
+
+/** A run of text, optionally emphasised — renders as <strong> when `strong`
+    is true. Concatenating `text` across all segments must reproduce the
+    plain-text sentence (used for anywhere a plain string is required, like
+    an aria-label). */
+export interface RichSegment {
+  text: string;
+  strong?: boolean;
+}
+
+export interface Dictionary {
+  meta: {
+    title: string;
+    description: string;
+  };
+
+  nav: {
+    howItWorks: string;
+    pricing: string;
+    calculator: string;
+    signUp: string;
+    /** Announces the language switcher to screen readers. */
+    languageSwitcher: string;
+  };
+
+  hero: {
+    eyebrowCity: string;
+    eyebrowRoute: string;
+    /** Three short lines, matching the three `.line-mask` wrappers in
+        Hero.tsx — kept short deliberately (see that file's own comment on
+        why long lines risk an unplanned wrap at this display size). */
+    headlineLine1: string;
+    headlineLine2: string;
+    /** The word immediately before "Lebanon" + the flag, e.g. English "to".
+        Rendered directly before the destination name, so keep it a single
+        short connector word/phrase with a trailing space if the language
+        needs one before the country name. */
+    headlineLine3Lead: string;
+    destinationName: string;
+    subtitle: RichSegment[];
+    chatWithUs: string;
+    chatWhatsappMessage: string;
+    estimateShipment: string;
+  };
+
+  statement: {
+    eyebrow: string;
+    headline: string;
+  };
+
+  marquee: {
+    words: string[];
+  };
+
+  howItWorks: {
+    eyebrow: string;
+    steps: {
+      title: string;
+      body: string;
+    }[];
+  };
+
+  calculatorPromo: {
+    eyebrow: string;
+    headline: string;
+    subtitle: string;
+    openCalculator: string;
+    personalTag: string;
+    personalTitle: string;
+    personalBlurb: string;
+    businessTag: string;
+    businessTitle: string;
+    businessBlurb: string;
+    startEstimate: string;
+  };
+
+  closingCTA: {
+    eyebrow: string;
+    headline: string;
+    subtitle: string;
+    personalParcelsLabel: string;
+    personalParcelsMessage: string;
+    businessInquiryLabel: string;
+    businessInquiryMessage: string;
+  };
+
+  footer: {
+    tagline: string;
+    calculator: string;
+    signUp: string;
+    devNotice: string;
+  };
+
+  preloader: {
+    /** Percent sign shown after the counting number — usually just "%", but
+        kept translatable since some locales place it differently. */
+    percentSign: string;
+  };
+
+  /** The redirect shell at the unprefixed root routes (/, /calculator,
+      /signup) — seen for a fraction of a second at most, so kept minimal.
+      English only in practice (this page redirects before anyone reads it),
+      but every locale's own phrase is here for the no-JS fallback link. */
+  redirect: {
+    message: string;
+    linkText: string;
+  };
+
+  calculatorPage: {
+    backToHome: string;
+    shippingEstimateEyebrow: string;
+    whereHeadline: string;
+    whereBody: string;
+    startEstimate: string;
+    onlyDestinationNotice: string;
+    shippingToEyebrow: string;
+    change: string;
+    profileTabsLabel: string;
+    personalTitle: string;
+    personalBlurb: string;
+    businessTitle: string;
+    businessBlurb: string;
+  };
+
+  /** Destination names, keyed by the id in pricing.ts's DESTINATIONS. */
+  destinations: Record<string, { name: string; gateway: string }>;
+
+  /** Display strings for pricing.ts's CARGO_CATEGORIES, keyed by category
+      id. Kept separate from the numeric data (id/basis/duty) in pricing.ts
+      itself, which stays 100% language-independent. */
+  cargoCategories: Record<
+    string,
+    { label: string; blurb: string; caveat?: string }
+  >;
+
+  /** Sentence templates for the numbers pricing.ts computes. pricing.ts
+      never hardcodes language — every function that builds a user-facing
+      explanation takes one of these as a parameter and calls it with the
+      already-computed numbers. Pre-formatted number/percent/currency
+      strings are passed in already localized (via format.ts's eur()/pct()),
+      so these only handle word order and connecting words. */
+  pricingSentences: {
+    /** category.duty === 0 branch of personalDuty(). */
+    personalDutyFree: (p: {
+      categoryLabel: string;
+      securityFeePct: string;
+      deemedUsdPerKg: string;
+      weightKg: number;
+    }) => string;
+    /** category.duty > 0 branch of personalDuty(). */
+    personalDutyCharged: (p: {
+      weightKg: number;
+      deemedUsdPerKg: string;
+      dutyPct: string;
+      /** Raw label, not pre-lowercased — German capitalizes nouns anywhere
+          in a sentence, so "lowercase mid-sentence" is an English-specific
+          styling choice each locale's own template applies (or doesn't). */
+      categoryLabel: string;
+      securityFeePct: string;
+    }) => string;
+    /** calculatePersonalQuote(), boxes mode, exactly one box. */
+    personalBasisOneBox: (p: { boxLabel: string; priceEur: string }) => string;
+    /** calculatePersonalQuote(), boxes mode, more than one box. */
+    personalBasisManyBoxes: (p: {
+      numBoxes: number;
+      boxLabel: string;
+      priceEur: string;
+    }) => string;
+    /** calculatePersonalQuote(), per-kilo mode. */
+    personalBasisPerKg: (p: { weightKg: number; perKgEur: string }) => string;
+    /** "what the same parcel would cost the other way" — from boxes mode. */
+    personalAlternativeFromBoxes: (p: {
+      boxLabel: string;
+      typicalKg: number;
+      numBoxes: number;
+      weightKg: number;
+      altEur: string;
+      perKgEur: string;
+    }) => string;
+    /** Same comparison, from per-kilo mode. */
+    personalAlternativeFromWeight: (p: {
+      boxesNeeded: number;
+      boxLabel: string;
+      altEur: string;
+    }) => string;
+    /** calculateQuote(), weight-basis category. */
+    businessDutyByWeight: (p: {
+      deemedUsdPerKg: string;
+      chargeableKg: number;
+      dutyPct: string;
+      securityFeePct: string;
+    }) => string;
+    /** calculateQuote(), value-basis category. */
+    businessDutyByValue: (p: {
+      valueEur: string;
+      dutyPct: string;
+      vatPct: string;
+      securityFeePct: string;
+      /** Raw label — see personalDutyCharged's note on why this isn't
+          pre-lowercased. */
+      categoryLabel: string;
+    }) => string;
+  };
+
+  personalCalculator: {
+    howToPay: string;
+    howToPayBody: string;
+    byTheBox: string;
+    byTheKilo: (perKg: string) => string;
+    boxSize: string;
+    holdsAbout: (kg: number) => string;
+    drawnToScale: string;
+    /** aria-label for the 3D box model. */
+    scaleModelLabel: (boxLabel: string, w: number, d: number, h: number) => string;
+    howManyBoxes: string;
+    oneBox: string;
+    nBoxes: (n: number) => string;
+    sendingMoreThan: (max: number) => string;
+    totalWeight: string;
+    kgUnit: (n: number) => string;
+    chargedOnActualWeight: (perKg: string) => string;
+    whatsInIt: string;
+    whatsInItBody: string;
+    summaryOneBox: (boxLabel: string) => string;
+    summaryManyBoxes: (n: number, boxLabel: string) => string;
+    summaryWeight: (kg: number) => string;
+    checkThisWithUs: string;
+    check: string;
+    estimatedAllIn: string;
+    shippingYouPayUs: string;
+    dutyMayCharge: string;
+    customsFinalAssessment: string;
+    cheaperByAmount: (amount: string) => string;
+    otherOptionSaves: (amount: string) => string;
+    bothOptionsSame: string;
+    footnote: (destination: string, dataAsOf: string) => string;
+    /** WhatsApp prefill message, params already localized/formatted. */
+    whatsappMessage: (p: {
+      destination: string;
+      summary: string;
+      categoryLabel: string;
+      shipping: string;
+      duty: string;
+    }) => string;
+  };
+
+  businessCalculator: {
+    readThisFirst: string;
+    usedGoodsTag: string;
+    usedGoodsBody: RichSegment[];
+    newGoodsTag: string;
+    newGoodsBody: RichSegment[];
+    footnote: (dataAsOf: string) => string;
+    whatAreYouSending: string;
+    whatAreYouSendingBody: string;
+    taxedByWeight: string;
+    taxedByValue: string;
+    sets: string;
+    freight: string;
+    duty: string;
+    clearance: string;
+    weight: string;
+    kgUnit: (n: number) => string;
+    minimumChargeable: (minKg: number) => string;
+    declaredValue: string;
+    notUsed: string;
+    dutyFollowsValue: (
+      categoryLabel: string,
+      dutyPct: string,
+      vatPct: string,
+      securityPct: string,
+    ) => string;
+    switchedOffBecause: (categoryLabel: string) => string;
+    checkThisWithUs: string;
+    check: string;
+    estimatedTotal: string;
+    /** WhatsApp prefill message, params already localized/formatted. */
+    whatsappMessage: (p: {
+      destination: string;
+      categoryLabel: string;
+      weight: number;
+      declaredValue: string | null;
+      rangeLow: string;
+      rangeHigh: string;
+    }) => string;
+  };
+
+  signup: {
+    backToHome: string;
+    createAccountEyebrow: string;
+    whatSigningUpFor: string;
+    whatSigningUpForBody: string;
+    privateTag: string;
+    privateTitle: string;
+    privateBody: string;
+    businessTag: string;
+    businessTitle: string;
+    businessBody: string;
+    start: string;
+    stepOf: (step: number, total: number) => string;
+    optional: string;
+    chooseFile: string;
+    fileTypesHint: string;
+    notUploadedNotice: string;
+    lastStep: string;
+    checkAndSend: string;
+    checkAndSendBody: (withId: boolean) => string;
+    copySummary: string;
+    copied: string;
+    copyFailed: string;
+    openWhatsapp: string;
+    back: string;
+    next: string;
+    review: string;
+    footerNotice: string;
+    /** Validation messages. */
+    validation: {
+      required: string;
+      invalidEmail: string;
+      invalidPhone: string;
+      chooseFileError: string;
+    };
+    /** The two step-arrays, keyed exactly like PRIVATE_STEPS/BUSINESS_STEPS
+        in signup/page.tsx — each step's `fields` mirrors that file's
+        `Field[]`, matched by `id`. */
+    privateSteps: SignupStep[];
+    businessSteps: SignupStep[];
+    /** WhatsApp prefill message once the wizard is filled in. */
+    privateWhatsappMessage: string;
+    businessWhatsappMessage: string;
+    /** Summary sheet header, e.g. "EL HAJ INTERNATIONAL — PRIVATE / SHIPPING
+        SIGN-UP" — kept translatable since it's copy-pasted verbatim by the
+        user, and should read naturally in their language. */
+    summaryHeaderPrivate: string;
+    summaryHeaderBusiness: string;
+  };
+}
+
+export interface SignupStep {
+  title: string;
+  blurb?: string;
+  fields: {
+    id: string;
+    label: string;
+    /** Shown under the field when present and there's no validation error. */
+    hint?: string;
+  }[];
+}
