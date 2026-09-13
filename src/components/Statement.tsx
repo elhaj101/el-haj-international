@@ -18,8 +18,9 @@ import { asset } from "@/lib/asset";
  * Both run at every breakpoint. A previous version gated the travel behind
  * min-width 768px, which left phones with a static picture.
  *
- * The line is deliberately broad — it has to speak to a family sending boxes
- * and to a business sourcing stock.
+ * The line names both audiences outright — a family sending boxes and a
+ * business moving stock — rather than leaning on one broad phrase to cover
+ * both. Mirrors the personal/business split the calculator itself now makes.
  */
 export default function Statement() {
   const root = useRef<HTMLDivElement>(null);
@@ -142,7 +143,7 @@ export default function Statement() {
       <div className="relative z-10 mx-auto w-full max-w-[1400px]">
         <p className="eyebrow mb-6">What we do</p>
         <h2 className="statement-h2 display max-w-[15ch] text-[clamp(2.4rem,8vw,6rem)] [text-shadow:0_2px_24px_var(--bg-alt)]">
-          We ship everything from Europe to the Middle East
+          We send both personal parcels and business cargo
         </h2>
       </div>
     </section>
