@@ -8,6 +8,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { whatsappLink } from "@/lib/pricing";
 import { asset } from "@/lib/asset";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { arrowFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * The one place the page stops being deliberately broad. Everywhere above, the
@@ -21,7 +23,9 @@ import { asset } from "@/lib/asset";
  * ("Ship with us" / "Trade with us") — matching the section's own point,
  * that this is a no-obligation question, not a commitment.
  */
-export default function ClosingCTA() {
+export default function ClosingCTA({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+  const t = dict.closingCTA;
+  const arrow = arrowFor(locale);
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -116,40 +120,35 @@ export default function ClosingCTA() {
           <div className="absolute inset-0 bg-gradient-to-b from-bg via-bg/90 to-bg/40 sm:bg-gradient-to-r sm:from-bg sm:via-bg/85 sm:to-bg/25" />
 
           <div className="relative px-7 py-20 lg:px-16 lg:py-32">
-            <p className="eyebrow cta-item">Get started</p>
+            <p className="eyebrow cta-item">{t.eyebrow}</p>
             <h2 className="cta-h2 display mt-5 max-w-[13ch] text-[clamp(2.1rem,7vw,4.75rem)]">
-              Customer service and consultation — free
+              {t.headline}
             </h2>
             <p className="cta-item measure mt-6 text-base text-muted lg:text-lg">
-              No forms and no account needed to ask. Message us and we will tell
-              you what it costs and what is involved.
+              {t.subtitle}
             </p>
 
             <div className="cta-item mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <a
-                href={whatsappLink(
-                  "Hi, I'd like to ship something from Europe to the Middle East.",
-                )}
+                href={whatsappLink(t.personalParcelsMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center justify-between gap-6 rounded-full bg-accent px-7 py-4 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
               >
-                Personal parcels
+                {t.personalParcelsLabel}
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
-                  →
+                  {arrow}
                 </span>
               </a>
               <a
-                href={whatsappLink(
-                  "Hi, I'm a business looking to source and trade products. Can we talk?",
-                )}
+                href={whatsappLink(t.businessInquiryMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center justify-between gap-6 rounded-full border border-fg/20 px-7 py-4 text-sm font-semibold transition-colors duration-200 hover:border-accent hover:text-accent"
               >
-                Business inquiry
+                {t.businessInquiryLabel}
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
-                  →
+                  {arrow}
                 </span>
               </a>
             </div>

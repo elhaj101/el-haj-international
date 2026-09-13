@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ContainerMark } from "./Logo";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /**
  * Short branded entrance. Deliberately under a second and a half — a preloader
@@ -22,7 +23,7 @@ import { ContainerMark } from "./Logo";
  */
 const HOLD_MS = 1500;
 
-export default function Preloader() {
+export default function Preloader({ dict }: { dict: Dictionary }) {
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -87,7 +88,7 @@ export default function Preloader() {
       <ContainerMark className="pl-mark h-14 w-[76px]" priority />
       <p className="display mt-6 text-5xl tabular-nums">
         <span className="pl-count">0</span>
-        <span className="text-accent">%</span>
+        <span className="text-accent">{dict.preloader.percentSign}</span>
       </p>
     </div>
   );

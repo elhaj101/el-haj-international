@@ -8,6 +8,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { whatsappLink } from "@/lib/pricing";
 import { asset } from "@/lib/asset";
 import Flag from "@/components/Flag";
+import RichText from "@/components/RichText";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { arrowFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * Full-bleed video hero — the ship fills the viewport at every size, phone
@@ -17,7 +20,9 @@ import Flag from "@/components/Flag";
  * and looped as a background layer, not a piece of content someone presses
  * play on.
  */
-export default function Hero() {
+export default function Hero({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+  const t = dict.hero;
+  const arrow = arrowFor(locale);
   const root = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -218,8 +223,7 @@ export default function Hero() {
       <div className="hero-copy relative flex h-full flex-col justify-end px-6 pb-16 lg:px-10 lg:pb-20">
         <div className="mx-auto w-full max-w-[1400px]">
           <p className="eyebrow hero-fade mb-5 !text-white/70">
-            Hamburg <span className="text-accent">·</span> Europe to the Middle
-            East
+            {t.eyebrowCity} <span className="text-accent">·</span> {t.eyebrowRoute}
           </p>
           {/* Three explicit lines rather than SplitText's automatic
               line-detection: SplitText rebuilds this element's DOM by
@@ -233,46 +237,42 @@ export default function Hero() {
               content that isn't plain text. */}
           <h1 className="hero-h1 display text-[clamp(2.9rem,10.5vw,9rem)] text-white">
             <span className="line-mask">
-              <span className="hero-line-inner block">Send anything</span>
+              <span className="hero-line-inner block">{t.headlineLine1}</span>
             </span>
             <span className="line-mask">
-              <span className="hero-line-inner block">from Europe</span>
+              <span className="hero-line-inner block">{t.headlineLine2}</span>
             </span>
             <span className="line-mask">
               <span className="hero-line-inner flex items-center gap-3">
-                to Lebanon
+                {t.headlineLine3Lead} {t.destinationName}
                 <Flag
                   id="LB"
-                  name="Lebanon"
+                  name={t.destinationName}
                   className="hero-flag w-[0.85em] origin-left"
                 />
               </span>
             </span>
           </h1>
           <p className="hero-fade measure mt-6 text-base leading-relaxed text-white/75 lg:text-lg">
-            Consolidated container shipping and trading between{" "}
-            <strong className="font-semibold text-white">Europe</strong> and{" "}
-            <strong className="font-semibold text-white">the Middle East</strong>.
+            <RichText segments={t.subtitle} strongClassName="font-semibold text-white" />
           </p>
           <div className="hero-fade mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
             <a
-              href={whatsappLink(
-                "Hi, I found El Haj International and I'd like to ask about shipping.",
-              )}
+              href={whatsappLink(t.chatWhatsappMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
             >
-              Chat with us
+              {t.chatWithUs}
               <span className="transition-transform duration-200 group-hover:translate-x-1">
-                →
+                {arrow}
               </span>
             </a>
             <Link
-              href="/calculator"
+              href={`/${locale}/calculator`}
               className="rounded-full border border-white/35 px-7 py-3.5 text-sm font-medium text-white transition-colors duration-200 hover:border-white"
             >
-              Estimate a shipment
+              {t.estimateShipment}
             </Link>
           </div>
         </div>

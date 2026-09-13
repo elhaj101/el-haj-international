@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ContainerMark } from "./Logo";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /**
  * Concrete, button-by-button steps — literally what happens when you click
@@ -31,26 +32,15 @@ import { ContainerMark } from "./Logo";
  * The track scrolls horizontally at EVERY breakpoint. It used to be desktop-
  * only, which meant a phone got three (formerly four) static stacked
  * paragraphs — the flattest possible reading of the page.
+ *
+ * Steps come from dict.howItWorks.steps; the "01/02/03" numbering is
+ * computed from array position rather than stored per-locale, since it's
+ * plain Western digits everywhere on this site (including Arabic — see
+ * locales.ts's NUMBER_LOCALE comment on why Lebanese commercial numerals
+ * stay Latin), not language-dependent content.
  */
-const STEPS = [
-  {
-    n: "01",
-    title: "Estimate a shipment",
-    body: 'Press "Estimate a shipment," choose the destination, then say whether it\'s a personal parcel or a business shipment. You get a price range immediately — no form and no account needed yet.',
-  },
-  {
-    n: "02",
-    title: "Create an account",
-    body: 'Press "Sign up," pick private or business, and answer a short set of questions about who is sending and who is receiving. Nothing is uploaded or stored — there is no backend yet — so this prepares your details rather than opening a real login.',
-  },
-  {
-    n: "03",
-    title: "Confirm order",
-    body: "On the last screen, copy your summary and send it to us on WhatsApp. That message is what actually confirms the shipment — we reply with the final cost and what happens next.",
-  },
-];
-
-export default function HowItWorks() {
+export default function HowItWorks({ dict }: { dict: Dictionary }) {
+  const STEPS = dict.howItWorks.steps;
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -141,18 +131,18 @@ export default function HowItWorks() {
   return (
     <section id="how" ref={root} className="relative h-svh overflow-hidden">
       <div className="how-eyebrow absolute inset-x-0 top-0 z-10 mx-auto max-w-[1400px] px-6 pt-24 lg:px-10 lg:pt-28">
-        <p className="eyebrow">How it works</p>
+        <p className="eyebrow">{dict.howItWorks.eyebrow}</p>
       </div>
 
       <div className="flex h-full items-center">
         <div className="h-track flex">
-          {STEPS.map((s) => (
+          {STEPS.map((s, i) => (
             <article
-              key={s.n}
+              key={s.title}
               className="step-panel flex w-[86vw] shrink-0 flex-col justify-center px-6 sm:w-[68vw] sm:px-[6vw] lg:w-[52vw]"
             >
               <span className="display block text-[clamp(3.5rem,14vw,7rem)] text-line">
-                {s.n}
+                {String(i + 1).padStart(2, "0")}
               </span>
               <h3 className="display mt-2 text-[clamp(1.9rem,6.5vw,3.25rem)]">
                 {s.title}

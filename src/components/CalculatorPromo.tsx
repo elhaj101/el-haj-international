@@ -6,6 +6,8 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { arrowFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * Replaces the old cargo-category grid (household goods, electronics,
@@ -25,7 +27,15 @@ import { SplitText } from "gsap/SplitText";
  * URL — the page doesn't support preselecting a profile via query param,
  * so either card lands on its normal first step (choose a destination).
  */
-export default function CalculatorPromo() {
+export default function CalculatorPromo({
+  dict,
+  locale,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+}) {
+  const t = dict.calculatorPromo;
+  const arrow = arrowFor(locale);
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -101,53 +111,49 @@ export default function CalculatorPromo() {
       <div className="mx-auto max-w-[1400px]">
         <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-20">
           <div>
-            <p className="eyebrow promo-item">Pricing</p>
+            <p className="eyebrow promo-item">{t.eyebrow}</p>
             <h2 className="promo-h2 display mt-5 max-w-[12ch] text-[clamp(2.1rem,7vw,4.25rem)]">
-              Know the price before you ship.
+              {t.headline}
             </h2>
             <p className="promo-item measure mt-6 text-base text-muted lg:text-lg">
-              Freight, duty and fees — one estimate, no commitment.
+              {t.subtitle}
             </p>
             <Link
-              href="/calculator"
+              href={`/${locale}/calculator`}
               className="promo-item group mt-8 inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
             >
-              Open the calculator
+              {t.openCalculator}
               <span className="transition-transform duration-200 group-hover:translate-x-1">
-                →
+                {arrow}
               </span>
             </Link>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <Link
-              href="/calculator"
+              href={`/${locale}/calculator`}
               className="promo-card group rounded-2xl border border-line p-7 transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
             >
-              <p className="eyebrow">Shipping</p>
+              <p className="eyebrow">{t.personalTag}</p>
               <h3 className="display mt-3 text-2xl transition-colors duration-200 group-hover:text-accent">
-                Personal parcel
+                {t.personalTitle}
               </h3>
-              <p className="mt-2 text-sm text-muted">
-                Boxes to family — one flat price
-              </p>
+              <p className="mt-2 text-sm text-muted">{t.personalBlurb}</p>
               <span className="mt-5 inline-block text-sm text-accent">
-                Start estimate →
+                {t.startEstimate} {arrow}
               </span>
             </Link>
             <Link
-              href="/calculator"
+              href={`/${locale}/calculator`}
               className="promo-card group rounded-2xl border border-line p-7 transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
             >
-              <p className="eyebrow">Trading</p>
+              <p className="eyebrow">{t.businessTag}</p>
               <h3 className="display mt-3 text-2xl transition-colors duration-200 group-hover:text-accent">
-                Business shipment
+                {t.businessTitle}
               </h3>
-              <p className="mt-2 text-sm text-muted">
-                Commercial stock — freight, clearance and duty
-              </p>
+              <p className="mt-2 text-sm text-muted">{t.businessBlurb}</p>
               <span className="mt-5 inline-block text-sm text-accent">
-                Start estimate →
+                {t.startEstimate} {arrow}
               </span>
             </Link>
           </div>

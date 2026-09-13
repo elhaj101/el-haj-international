@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { asset } from "@/lib/asset";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /**
  * The signature moment: a container is craned across the viewport while the
@@ -22,7 +23,7 @@ import { asset } from "@/lib/asset";
  * business moving stock — rather than leaning on one broad phrase to cover
  * both. Mirrors the personal/business split the calculator itself now makes.
  */
-export default function Statement() {
+export default function Statement({ dict }: { dict: Dictionary }) {
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -141,9 +142,9 @@ export default function Statement() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px]">
-        <p className="eyebrow mb-6">What we do</p>
+        <p className="eyebrow mb-6">{dict.statement.eyebrow}</p>
         <h2 className="statement-h2 display max-w-[15ch] text-[clamp(2.4rem,8vw,6rem)] [text-shadow:0_2px_24px_var(--bg-alt)]">
-          We send both personal parcels and business cargo
+          {dict.statement.headline}
         </h2>
       </div>
     </section>

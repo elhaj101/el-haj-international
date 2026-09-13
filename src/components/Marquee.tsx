@@ -4,15 +4,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-const WORDS = [
-  "Sea freight",
-  "Consolidation",
-  "Customs clearance",
-  "Door to door",
-  "Sourcing",
-  "Groupage",
-];
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /**
  * A continuously moving strip. Two jobs: it breaks up a page that would
@@ -22,7 +14,8 @@ const WORDS = [
  * Scroll velocity nudges its speed, so it feels connected to the page rather
  * than bolted on.
  */
-export default function Marquee() {
+export default function Marquee({ dict }: { dict: Dictionary }) {
+  const WORDS = dict.marquee.words;
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
