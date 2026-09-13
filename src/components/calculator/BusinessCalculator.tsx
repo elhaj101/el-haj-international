@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import RichText from "@/components/RichText";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { arrowFor, type Locale } from "@/lib/i18n/locales";
 import {
   BAND_COLORS,
   CARGO_CATEGORIES,
@@ -28,33 +31,48 @@ import { eur, pct } from "./format";
  */
 export default function BusinessCalculator({
   destinationName,
+  dict,
+  locale,
 }: {
   destinationName: string;
+  dict: Dictionary;
+  locale: Locale;
 }) {
+  const t = dict.businessCalculator;
+  const arrow = arrowFor(locale);
   const [categoryId, setCategoryId] = useState<string>("used-household");
   const [weight, setWeight] = useState(60);
   const [value, setValue] = useState(500);
 
   const category = getCategory(categoryId);
+  const categoryStrings = dict.cargoCategories[category.id];
   const byValue = category.basis === "value";
 
   const quote = useMemo(
-    () => calculateQuote({ weightKg: weight, categoryId, declaredValueEur: value }),
-    [weight, categoryId, value],
+    () =>
+      calculateQuote(
+        { weightKg: weight, categoryId, declaredValueEur: value },
+        dict,
+        locale,
+      ),
+    [weight, categoryId, value, dict, locale],
   );
 
   const segments = [
-    { key: "Freight", amount: quote.freightEur, color: COST_COLORS.freight },
-    { key: "Clearance", amount: quote.clearanceEur, color: COST_COLORS.clearance },
-    { key: "Duty", amount: quote.dutyEur, color: COST_COLORS.duty },
+    { key: t.freight, amount: quote.freightEur, color: COST_COLORS.freight },
+    { key: t.clearance, amount: quote.clearanceEur, color: COST_COLORS.clearance },
+    { key: t.duty, amount: quote.dutyEur, color: COST_COLORS.duty },
   ];
   const totalForBar = segments.reduce((a, s) => a + s.amount, 0) || 1;
 
-  const waMessage =
-    `Hi, I used the business calculator on your site. ` +
-    `${destinationName}, ${category.label.toLowerCase()}, ~${weight} kg` +
-    `${byValue ? `, declared ${eur(value)}` : ""}. ` +
-    `Estimated ${eur(quote.rangeLowEur)}–${eur(quote.rangeHighEur)}. Can you confirm?`;
+  const waMessage = t.whatsappMessage({
+    destination: destinationName,
+    categoryLabel: categoryStrings.label,
+    weight,
+    declaredValue: byValue ? eur(value, locale) : null,
+    rangeLow: eur(quote.rangeLowEur, locale),
+    rangeHigh: eur(quote.rangeHighEur, locale),
+  });
 
   return (
     <>
@@ -63,21 +81,17 @@ export default function BusinessCalculator({
                which inputs even apply, so reading them after the sliders is
                backwards. ---- */}
         <section className="rounded-2xl border border-line bg-bg-alt p-6 lg:p-8">
-          <h2 className="display text-lg lg:text-xl">
-            Read this first — two rules decide your cost
-          </h2>
+          <h2 className="display text-lg lg:text-xl">{t.readThisFirst}</h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <div className="rounded-xl bg-bg p-5">
               <span
                 className="inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white"
                 style={{ background: BAND_COLORS[4] }}
               >
-                Used goods
+                {t.usedGoodsTag}
               </span>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                Taxed <strong className="text-fg">by weight</strong>. Customs
-                applies a deemed value per kilo, so what the contents are
-                actually worth changes nothing. Declared value is ignored.
+                <RichText segments={t.usedGoodsBody} strongClassName="text-fg" />
               </p>
             </div>
             <div className="rounded-xl bg-bg p-5">
@@ -85,43 +99,35 @@ export default function BusinessCalculator({
                 className="inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white"
                 style={{ background: BAND_COLORS[1] }}
               >
-                New goods
+                {t.newGoodsTag}
               </span>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                Taxed <strong className="text-fg">by value</strong>, at a rate
-                set by the commodity — laptops come in duty free, perfume and
-                cosmetics are among the heaviest.
+                <RichText segments={t.newGoodsBody} strongClassName="text-fg" />
               </p>
             </div>
           </div>
           <p className="mt-5 text-xs leading-relaxed text-muted">
-            Freight is charged on weight in both cases, and clearance is a flat
-            fee per consignment. This is an estimate, not a quote — rates here
-            date from {CUSTOMS_DATA_AS_OF} and need re-confirmation. Final duty
-            is assessed by Lebanese customs, not by us, and we are not taking
-            bookings yet.
+            {t.footnote(CUSTOMS_DATA_AS_OF)}
           </p>
         </section>
 
         {/* ---- Category ---- */}
         <h2 className="display mt-14 text-[clamp(1.4rem,3.5vw,2rem)]">
-          What are you sending?
+          {t.whatAreYouSending}
         </h2>
-        <p className="measure mt-2 text-sm text-muted">
-          Lebanese customs charges a different rate for every commodity. Pick the
-          closest match — the percentage shown is its duty rate.
-        </p>
+        <p className="measure mt-2 text-sm text-muted">{t.whatAreYouSendingBody}</p>
 
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CARGO_CATEGORIES.map((c) => {
             const on = c.id === categoryId;
+            const strings = dict.cargoCategories[c.id];
             return (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setCategoryId(c.id)}
                 aria-pressed={on}
-                className={`relative overflow-hidden rounded-xl border p-5 pl-6 text-left transition-all duration-200 ${
+                className={`relative overflow-hidden rounded-xl border p-5 ps-6 text-left transition-all duration-200 ${
                   on
                     ? "border-fg/30 bg-bg-alt shadow-sm"
                     : "border-line hover:border-fg/25"
@@ -129,32 +135,32 @@ export default function BusinessCalculator({
               >
                 <span
                   aria-hidden
-                  className="absolute inset-y-0 left-0 w-1.5"
+                  className="absolute inset-y-0 start-0 w-1.5"
                   style={{ background: BAND_COLORS[bandFor(c.duty)] }}
                 />
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="display text-lg leading-tight">{c.label}</span>
+                  <span className="display text-lg leading-tight">{strings.label}</span>
                   <span
                     className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums text-white"
                     style={{ background: BAND_COLORS[bandFor(c.duty)] }}
                   >
-                    {pct(c.duty)}
+                    {pct(c.duty, locale)}
                   </span>
                 </span>
                 <span className="mt-1.5 block text-xs leading-relaxed text-muted">
-                  {c.blurb}
+                  {strings.blurb}
                 </span>
                 <span className="mt-3 block text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-                  {c.basis === "weight" ? "Taxed by weight" : "Taxed by value"}
+                  {c.basis === "weight" ? t.taxedByWeight : t.taxedByValue}
                 </span>
               </button>
             );
           })}
         </div>
 
-        {category.caveat && (
+        {categoryStrings.caveat && (
           <p className="mt-5 rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed">
-            <strong>{category.label}:</strong> {category.caveat}
+            <strong>{categoryStrings.label}:</strong> {categoryStrings.caveat}
           </p>
         )}
 
@@ -166,12 +172,16 @@ export default function BusinessCalculator({
             <div>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <label htmlFor="weight" className="text-sm font-semibold">
-                  Weight
-                  <span className="ml-2 font-normal tabular-nums text-muted">
-                    {weight} kg
+                  {t.weight}
+                  <span className="ms-2 font-normal tabular-nums text-muted">
+                    {t.kgUnit(weight)}
                   </span>
                 </label>
-                <Drives parts={byValue ? ["Freight"] : ["Freight", "Duty"]} />
+                <Drives
+                  parts={byValue ? [t.freight] : [t.freight, t.duty]}
+                  sets={t.sets}
+                  freightLabel={t.freight}
+                />
               </div>
               <input
                 id="weight"
@@ -184,13 +194,12 @@ export default function BusinessCalculator({
                 className="mt-4 w-full accent-[var(--accent)]"
               />
               <div className="mt-2 flex justify-between text-xs text-muted">
-                <span>5 kg</span>
-                <span>1000 kg</span>
+                <span>{t.kgUnit(5)}</span>
+                <span>{t.kgUnit(1000)}</span>
               </div>
               {quote.minimumApplied && (
                 <p className="mt-3 text-xs text-accent">
-                  Minimum chargeable weight is {MIN_CHARGEABLE_KG} kg, so this is
-                  priced as {MIN_CHARGEABLE_KG} kg.
+                  {t.minimumChargeable(MIN_CHARGEABLE_KG)}
                 </p>
               )}
             </div>
@@ -201,16 +210,16 @@ export default function BusinessCalculator({
             <div className={byValue ? "" : "opacity-55"}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <label htmlFor="value" className="text-sm font-semibold">
-                  Declared value
-                  <span className="ml-2 font-normal tabular-nums text-muted">
-                    {byValue ? eur(value) : "—"}
+                  {t.declaredValue}
+                  <span className="ms-2 font-normal tabular-nums text-muted">
+                    {byValue ? eur(value, locale) : "—"}
                   </span>
                 </label>
                 {byValue ? (
-                  <Drives parts={["Duty"]} />
+                  <Drives parts={[t.duty]} sets={t.sets} freightLabel={t.freight} />
                 ) : (
                   <span className="rounded-full border border-line px-2.5 py-1 text-[0.65rem] uppercase tracking-wider text-muted">
-                    Not used
+                    {t.notUsed}
                   </span>
                 )}
               </div>
@@ -228,36 +237,34 @@ export default function BusinessCalculator({
               />
               {byValue ? (
                 <p className="mt-3 text-xs text-muted">
-                  Duty on {category.label.toLowerCase()} follows what the goods
-                  are worth, at {pct(category.duty)} plus {pct(LEBANON_VAT_RATE)}{" "}
-                  VAT and {pct(SECURITY_FEE_RATE)} security fee.
+                  {t.dutyFollowsValue(
+                    categoryStrings.label,
+                    pct(category.duty, locale),
+                    pct(LEBANON_VAT_RATE, locale),
+                    pct(SECURITY_FEE_RATE, locale),
+                  )}
                 </p>
               ) : (
                 <p id="value-disabled" className="mt-3 text-xs text-muted">
-                  Switched off because{" "}
-                  <strong className="text-fg">
-                    {category.label.toLowerCase()}
-                  </strong>{" "}
-                  are assessed on a deemed value per kilo. Changing this figure
-                  could not change the duty, so it does not apply here.
+                  {t.switchedOffBecause(categoryStrings.label)}
                 </p>
               )}
             </div>
 
             <div className="lg:hidden">
-              <Result quote={quote} segments={segments} totalForBar={totalForBar} />
+              <Result quote={quote} segments={segments} totalForBar={totalForBar} t={t} locale={locale} />
             </div>
           </div>
 
           <aside className="hidden h-fit lg:sticky lg:top-10 lg:block">
-            <Result quote={quote} segments={segments} totalForBar={totalForBar} />
+            <Result quote={quote} segments={segments} totalForBar={totalForBar} t={t} locale={locale} />
             <a
               href={whatsappLink(waMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.02]"
             >
-              Check this with us →
+              {t.checkThisWithUs} {arrow}
             </a>
           </aside>
         </div>
@@ -269,12 +276,12 @@ export default function BusinessCalculator({
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="truncate text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-              {destinationName} · {weight} kg
+              {destinationName} · {t.kgUnit(weight)}
             </p>
             <p className="display truncate text-2xl leading-tight tabular-nums">
-              <AnimatedNumber value={quote.rangeLowEur} format={eur} />
+              <AnimatedNumber value={quote.rangeLowEur} format={(n) => eur(n, locale)} />
               <span className="text-muted"> – </span>
-              <AnimatedNumber value={quote.rangeHighEur} format={eur} />
+              <AnimatedNumber value={quote.rangeHighEur} format={(n) => eur(n, locale)} />
             </p>
           </div>
           <a
@@ -283,7 +290,7 @@ export default function BusinessCalculator({
             rel="noopener noreferrer"
             className="shrink-0 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white"
           >
-            Check
+            {t.check}
           </a>
         </div>
       </div>
@@ -292,12 +299,18 @@ export default function BusinessCalculator({
 }
 
 /** Which line items an input actually moves, colour-keyed to the cost bar. */
-function Drives({ parts }: { parts: ("Freight" | "Duty")[] }) {
+function Drives({
+  parts,
+  sets,
+  freightLabel,
+}: {
+  parts: string[];
+  sets: string;
+  freightLabel: string;
+}) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className="text-[0.65rem] uppercase tracking-wider text-muted">
-        Sets
-      </span>
+      <span className="text-[0.65rem] uppercase tracking-wider text-muted">{sets}</span>
       {parts.map((p) => (
         <span
           key={p}
@@ -307,8 +320,7 @@ function Drives({ parts }: { parts: ("Freight" | "Duty")[] }) {
             aria-hidden
             className="h-2 w-2 rounded-full"
             style={{
-              background:
-                p === "Freight" ? COST_COLORS.freight : COST_COLORS.duty,
+              background: p === freightLabel ? COST_COLORS.freight : COST_COLORS.duty,
             }}
           />
           {p}
@@ -322,18 +334,22 @@ function Result({
   quote,
   segments,
   totalForBar,
+  t,
+  locale,
 }: {
   quote: ReturnType<typeof calculateQuote>;
   segments: { key: string; amount: number; color: string }[];
   totalForBar: number;
+  t: Dictionary["businessCalculator"];
+  locale: Locale;
 }) {
   return (
     <div className="rounded-2xl border border-line bg-bg-alt p-7 lg:p-8">
-      <p className="eyebrow">Estimated total</p>
+      <p className="eyebrow">{t.estimatedTotal}</p>
       <p className="display mt-3 text-[clamp(2rem,5vw,3rem)] leading-none tabular-nums">
-        <AnimatedNumber value={quote.rangeLowEur} format={eur} />
+        <AnimatedNumber value={quote.rangeLowEur} format={(n) => eur(n, locale)} />
         <span className="text-muted"> – </span>
-        <AnimatedNumber value={quote.rangeHighEur} format={eur} />
+        <AnimatedNumber value={quote.rangeHighEur} format={(n) => eur(n, locale)} />
       </p>
 
       {/* Stacked cost bar. Every segment is direct-labelled below, so identity
@@ -341,7 +357,7 @@ function Result({
       <div
         className="mt-7 flex h-3 w-full overflow-hidden rounded-full"
         role="img"
-        aria-label={segments.map((s) => `${s.key} ${eur(s.amount)}`).join(", ")}
+        aria-label={segments.map((s) => `${s.key} ${eur(s.amount, locale)}`).join(", ")}
       >
         {segments.map((s, i) => (
           <span
@@ -366,11 +382,11 @@ function Result({
                 style={{ background: s.color }}
               />
               {s.key}
-              {s.key === "Freight" && (
-                <span className="text-xs">({quote.chargeableKg} kg)</span>
+              {s.key === t.freight && (
+                <span className="text-xs">({t.kgUnit(quote.chargeableKg)})</span>
               )}
             </dt>
-            <dd className="tabular-nums">{eur(s.amount)}</dd>
+            <dd className="tabular-nums">{eur(s.amount, locale)}</dd>
           </div>
         ))}
       </dl>

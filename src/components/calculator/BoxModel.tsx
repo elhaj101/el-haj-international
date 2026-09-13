@@ -16,7 +16,13 @@ import type { BoxSize } from "@/lib/pricing";
  * than a swap between two pictures. The spin, and that tween, both stop
  * under `prefers-reduced-motion`.
  */
-export default function BoxModel({ box }: { box: BoxSize }) {
+export default function BoxModel({
+  box,
+  ariaLabel,
+}: {
+  box: BoxSize;
+  ariaLabel: string;
+}) {
   // cm -> css length, at whatever scale the viewport is using.
   const u = (cm: number) => `calc(var(--box-scale) * ${cm})`;
 
@@ -71,7 +77,7 @@ export default function BoxModel({ box }: { box: BoxSize }) {
     <div
       className="box-scene w-full"
       role="img"
-      aria-label={`Scale model of the ${box.label} box, ${box.w} by ${box.d} by ${box.h} centimetres`}
+      aria-label={ariaLabel}
     >
       <div className="box-cube">
         {faces.map((f) => (

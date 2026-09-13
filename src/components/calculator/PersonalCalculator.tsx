@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import type { Dictionary } from "@/lib/i18n/dictionary";
+import { arrowFor, type Locale } from "@/lib/i18n/locales";
 import {
   BAND_COLORS,
   BOX_SIZES,
@@ -36,9 +38,15 @@ import { eur, pct } from "./format";
  */
 export default function PersonalCalculator({
   destinationName,
+  dict,
+  locale,
 }: {
   destinationName: string;
+  dict: Dictionary;
+  locale: Locale;
 }) {
+  const t = dict.personalCalculator;
+  const arrow = arrowFor(locale);
   const [mode, setMode] = useState<PersonalMode>("boxes");
   const [boxId, setBoxId] = useState("L");
   const [numBoxes, setNumBoxes] = useState(3);
@@ -47,29 +55,38 @@ export default function PersonalCalculator({
 
   const box = getBoxSize(boxId);
   const category = getCategory(categoryId);
+  const categoryStrings = dict.cargoCategories[category.id];
   const byBoxes = mode === "boxes";
 
   const quote = useMemo(
     () =>
-      calculatePersonalQuote({
-        mode,
-        boxId,
-        numBoxes,
-        weightKg: weight,
-        categoryId,
-      }),
-    [mode, boxId, numBoxes, weight, categoryId],
+      calculatePersonalQuote(
+        {
+          mode,
+          boxId,
+          numBoxes,
+          weightKg: weight,
+          categoryId,
+        },
+        dict,
+        locale,
+      ),
+    [mode, boxId, numBoxes, weight, categoryId, dict, locale],
   );
 
   const summary = byBoxes
-    ? `${numBoxes} × ${box.label} box${numBoxes === 1 ? "" : "es"}`
-    : `${weight} kg`;
+    ? numBoxes === 1
+      ? t.summaryOneBox(box.label)
+      : t.summaryManyBoxes(numBoxes, box.label)
+    : t.summaryWeight(weight);
 
-  const waMessage =
-    `Hi, I used the calculator on your site. ` +
-    `Personal parcel to ${destinationName}, ${summary}, ` +
-    `${category.label.toLowerCase()}. Shipping ${eur(quote.shippingEur)}, ` +
-    `estimated duty ${eur(quote.dutyEur)}. Can you confirm?`;
+  const waMessage = t.whatsappMessage({
+    destination: destinationName,
+    summary,
+    categoryLabel: categoryStrings.label,
+    shipping: eur(quote.shippingEur, locale),
+    duty: eur(quote.dutyEur, locale),
+  });
 
   return (
     <>
@@ -80,13 +97,9 @@ export default function PersonalCalculator({
                    one choice, so it leads. ---- */}
             <div>
               <h2 className="display text-[clamp(1.4rem,3.5vw,2rem)]">
-                How do you want to pay?
+                {t.howToPay}
               </h2>
-              <p className="measure mt-2 text-sm text-muted">
-                A flat price per box whatever it weighs, or a flat price per
-                kilo. Pick whichever suits what you are sending — the estimate
-                below shows what the other one would cost.
-              </p>
+              <p className="measure mt-2 text-sm text-muted">{t.howToPayBody}</p>
               <div className="mt-6 flex gap-2">
                 <button
                   type="button"
@@ -98,7 +111,7 @@ export default function PersonalCalculator({
                       : "border-line text-muted hover:border-fg/25"
                   }`}
                 >
-                  By the box
+                  {t.byTheBox}
                 </button>
                 <button
                   type="button"
@@ -110,7 +123,7 @@ export default function PersonalCalculator({
                       : "border-line text-muted hover:border-fg/25"
                   }`}
                 >
-                  By the kilo · €{PERSONAL_PER_KG_EUR.toFixed(2)}/kg
+                  {t.byTheKilo(eur(PERSONAL_PER_KG_EUR, locale))}
                 </button>
               </div>
             </div>
@@ -119,7 +132,7 @@ export default function PersonalCalculator({
               <>
                 {/* ---- Box size ---- */}
                 <div>
-                  <label className="text-sm font-semibold">Box size</label>
+                  <label className="text-sm font-semibold">{t.boxSize}</label>
                   {/* Three across at every width. On phones the dimensions
                       and capacity are hidden here rather than squeezed into
                       an 85px column — the model directly below states both
@@ -142,14 +155,14 @@ export default function PersonalCalculator({
                           <span className="flex flex-wrap items-baseline justify-between gap-x-2">
                             <span className="display text-xl">{b.label}</span>
                             <span className="text-sm font-semibold tabular-nums">
-                              {eur(b.priceEur)}
+                              {eur(b.priceEur, locale)}
                             </span>
                           </span>
                           <span className="mt-1.5 hidden text-[0.7rem] leading-snug text-muted sm:block">
                             {boxDims(b)}
                           </span>
                           <span className="mt-1 hidden text-[0.7rem] leading-snug text-muted sm:block">
-                            holds ~{typicalBoxKg(b)} kg
+                            {t.holdsAbout(typicalBoxKg(b))}
                           </span>
                         </button>
                       );
@@ -161,24 +174,23 @@ export default function PersonalCalculator({
                        size buttons so the change is visible at the moment
                        it is made. ---- */}
                 <div className="rounded-2xl border border-line bg-bg-alt px-4 py-5">
-                  <BoxModel box={box} />
+                  <BoxModel
+                    box={box}
+                    ariaLabel={t.scaleModelLabel(box.label, box.w, box.d, box.h)}
+                  />
                   <p className="mt-3 text-center text-xs text-muted">
                     <span className="font-semibold text-fg">
-                      {box.label} · {boxDims(box)} · holds ~{typicalBoxKg(box)}{" "}
-                      kg
+                      {box.label} · {boxDims(box)} · {t.holdsAbout(typicalBoxKg(box))}
                     </span>
-                    <span className="mt-0.5 block">
-                      drawn to scale — the three sizes are shown in real
-                      proportion to each other
-                    </span>
+                    <span className="mt-0.5 block">{t.drawnToScale}</span>
                   </p>
                 </div>
 
                 {/* ---- How many ---- */}
                 <div>
                   <label htmlFor="numBoxes" className="text-sm font-semibold">
-                    How many boxes
-                    <span className="ml-2 font-normal tabular-nums text-muted">
+                    {t.howManyBoxes}
+                    <span className="ms-2 font-normal tabular-nums text-muted">
                       {numBoxes}
                     </span>
                   </label>
@@ -193,12 +205,11 @@ export default function PersonalCalculator({
                     className="mt-4 w-full accent-[var(--accent)]"
                   />
                   <div className="mt-2 flex justify-between text-xs text-muted">
-                    <span>1 box</span>
-                    <span>{MAX_PERSONAL_BOXES} boxes</span>
+                    <span>{t.oneBox}</span>
+                    <span>{t.nBoxes(MAX_PERSONAL_BOXES)}</span>
                   </div>
                   <p className="mt-3 text-xs text-muted">
-                    Sending more than {MAX_PERSONAL_BOXES}? Message us — at that
-                    size it is worth pricing properly rather than by the box.
+                    {t.sendingMoreThan(MAX_PERSONAL_BOXES)}
                   </p>
                 </div>
               </>
@@ -206,9 +217,9 @@ export default function PersonalCalculator({
               /* ---- Weight ---- */
               <div>
                 <label htmlFor="weight" className="text-sm font-semibold">
-                  Total weight
-                  <span className="ml-2 font-normal tabular-nums text-muted">
-                    {weight} kg
+                  {t.totalWeight}
+                  <span className="ms-2 font-normal tabular-nums text-muted">
+                    {t.kgUnit(weight)}
                   </span>
                 </label>
                 <input
@@ -222,13 +233,11 @@ export default function PersonalCalculator({
                   className="mt-4 w-full accent-[var(--accent)]"
                 />
                 <div className="mt-2 flex justify-between text-xs text-muted">
-                  <span>5 kg</span>
-                  <span>300 kg</span>
+                  <span>{t.kgUnit(5)}</span>
+                  <span>{t.kgUnit(300)}</span>
                 </div>
                 <p className="mt-3 text-xs text-muted">
-                  Charged on actual weight at a flat €
-                  {PERSONAL_PER_KG_EUR.toFixed(2)} per kilo, whatever the boxes
-                  are.
+                  {t.chargedOnActualWeight(eur(PERSONAL_PER_KG_EUR, locale))}
                 </p>
               </div>
             )}
@@ -239,11 +248,9 @@ export default function PersonalCalculator({
                    a deemed value per kilo, and the weight is already
                    known from the boxes or the slider above. ---- */}
             <div>
-              <label className="text-sm font-semibold">What is in it?</label>
+              <label className="text-sm font-semibold">{t.whatsInIt}</label>
               <p className="mt-2 text-xs leading-relaxed text-muted">
-                This does not change the shipping price. It sets the rate
-                Lebanese customs may charge on arrival — the percentage on each
-                card.
+                {t.whatsInItBody}
               </p>
               {/* Two-up even on the narrowest phone: fifteen full-width
                   cards is a scroll, and each card is only a name and a
@@ -251,13 +258,14 @@ export default function PersonalCalculator({
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {CARGO_CATEGORIES.map((c) => {
                   const on = c.id === categoryId;
+                  const strings = dict.cargoCategories[c.id];
                   return (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => setCategoryId(c.id)}
                       aria-pressed={on}
-                      className={`relative overflow-hidden rounded-xl border py-3 pl-4 pr-2.5 text-left transition-all duration-200 sm:pl-5 sm:pr-3 ${
+                      className={`relative overflow-hidden rounded-xl border py-3 ps-4 pe-2.5 text-left transition-all duration-200 sm:ps-5 sm:pe-3 ${
                         on
                           ? "border-fg/30 bg-bg-alt shadow-sm"
                           : "border-line hover:border-fg/25"
@@ -265,7 +273,7 @@ export default function PersonalCalculator({
                     >
                       <span
                         aria-hidden
-                        className="absolute inset-y-0 left-0 w-1.5"
+                        className="absolute inset-y-0 start-0 w-1.5"
                         style={{ background: BAND_COLORS[bandFor(c.duty)] }}
                       />
                       {/* min-w-0 lets the name shrink and wrap; flex-wrap
@@ -274,53 +282,46 @@ export default function PersonalCalculator({
                           both, "46.5%" renders as "46" on a 320px screen. */}
                       <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                         <span className="min-w-0 text-sm font-semibold leading-tight">
-                          {c.label}
+                          {strings.label}
                         </span>
                         <span
                           className="shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums text-white"
                           style={{ background: BAND_COLORS[bandFor(c.duty)] }}
                         >
-                          {pct(c.duty)}
+                          {pct(c.duty, locale)}
                         </span>
                       </span>
                     </button>
                   );
                 })}
               </div>
-              {category.caveat && (
+              {categoryStrings.caveat && (
                 <p className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed">
-                  <strong>{category.label}:</strong> {category.caveat}
+                  <strong>{categoryStrings.label}:</strong> {categoryStrings.caveat}
                 </p>
               )}
             </div>
 
             <div className="lg:hidden">
-              <PersonalResult quote={quote} summary={summary} />
+              <PersonalResult quote={quote} summary={summary} t={t} locale={locale} />
             </div>
           </div>
 
           <aside className="hidden h-fit lg:sticky lg:top-10 lg:block">
-            <PersonalResult quote={quote} summary={summary} />
+            <PersonalResult quote={quote} summary={summary} t={t} locale={locale} />
             <a
               href={whatsappLink(waMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.02]"
             >
-              Check this with us →
+              {t.checkThisWithUs} {arrow}
             </a>
           </aside>
         </div>
 
         <p className="measure mt-12 text-xs leading-relaxed text-muted">
-          The shipping price covers what we handle — Berlin to{" "}
-          {destinationName}, on our own consolidated container. The duty figure
-          is separate: it is charged by Lebanese customs on arrival, not by us,
-          and we have estimated it from the parcel&apos;s weight at the deemed
-          value customs applies to personal effects. Customs rates here date
-          from {CUSTOMS_DATA_AS_OF} and need re-confirmation, and customs make
-          the final assessment on the day. This is an estimate, not a quote, and
-          we are not taking bookings yet.
+          {t.footnote(destinationName, CUSTOMS_DATA_AS_OF)}
         </p>
       </main>
 
@@ -333,7 +334,7 @@ export default function PersonalCalculator({
               {destinationName} · {summary}
             </p>
             <p className="display truncate text-2xl leading-tight tabular-nums">
-              <AnimatedNumber value={quote.totalEur} format={eur} />
+              <AnimatedNumber value={quote.totalEur} format={(n) => eur(n, locale)} />
             </p>
           </div>
           <a
@@ -342,7 +343,7 @@ export default function PersonalCalculator({
             rel="noopener noreferrer"
             className="shrink-0 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white"
           >
-            Check
+            {t.check}
           </a>
         </div>
       </div>
@@ -353,17 +354,21 @@ export default function PersonalCalculator({
 function PersonalResult({
   quote,
   summary,
+  t,
+  locale,
 }: {
   quote: ReturnType<typeof calculatePersonalQuote>;
   summary: string;
+  t: Dictionary["personalCalculator"];
+  locale: Locale;
 }) {
   return (
     <div className="rounded-2xl border border-line bg-bg-alt p-7 lg:p-8">
       <p className="eyebrow">{summary}</p>
       <p className="display mt-3 text-[clamp(2.5rem,7vw,4rem)] leading-none tabular-nums">
-        <AnimatedNumber value={quote.totalEur} format={eur} />
+        <AnimatedNumber value={quote.totalEur} format={(n) => eur(n, locale)} />
       </p>
-      <p className="mt-2 text-xs text-muted">estimated all-in</p>
+      <p className="mt-2 text-xs text-muted">{t.estimatedAllIn}</p>
 
       {/* The split matters more than the total: one half is our price and
           is fixed, the other is a foreign government's charge that we
@@ -371,20 +376,18 @@ function PersonalResult({
           would imply we control both. */}
       <dl className="mt-6 space-y-3 border-t border-line pt-5 text-sm">
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted">Shipping — you pay us</dt>
-          <dd className="font-semibold tabular-nums">{eur(quote.shippingEur)}</dd>
+          <dt className="text-muted">{t.shippingYouPayUs}</dt>
+          <dd className="font-semibold tabular-nums">{eur(quote.shippingEur, locale)}</dd>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted">
-            Duty — customs may charge on arrival
-          </dt>
-          <dd className="font-semibold tabular-nums">{eur(quote.dutyEur)}</dd>
+          <dt className="text-muted">{t.dutyMayCharge}</dt>
+          <dd className="font-semibold tabular-nums">{eur(quote.dutyEur, locale)}</dd>
         </div>
       </dl>
 
       <p className="mt-5 text-sm leading-relaxed text-muted">{quote.basis}</p>
       <p className="mt-3 text-xs leading-relaxed text-muted">
-        {quote.dutyBasis} Customs make the final assessment, not us.
+        {quote.dutyBasis} {t.customsFinalAssessment}
       </p>
 
       {/* The one genuinely useful thing this calculator can tell someone:
@@ -402,18 +405,12 @@ function PersonalResult({
           <p className="mt-2.5 text-xs font-semibold">
             {quote.alternativeEur > quote.shippingEur ? (
               <span className="text-accent">
-                This is the cheaper way to ship it, by{" "}
-                {eur(quote.alternativeEur - quote.shippingEur)}.
+                {t.cheaperByAmount(eur(quote.alternativeEur - quote.shippingEur, locale))}
               </span>
             ) : quote.alternativeEur < quote.shippingEur ? (
-              <span>
-                The other option would save you about{" "}
-                {eur(quote.shippingEur - quote.alternativeEur)} — worth a look.
-              </span>
+              <span>{t.otherOptionSaves(eur(quote.shippingEur - quote.alternativeEur, locale))}</span>
             ) : (
-              <span className="text-muted">
-                Both options come out about the same here.
-              </span>
+              <span className="text-muted">{t.bothOptionsSame}</span>
             )}
           </p>
         </div>
