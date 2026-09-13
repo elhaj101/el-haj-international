@@ -14,6 +14,20 @@
   --muted: #6b6560;
   --accent: #e8942b; /* from the logo's SHIPPING wordmark */
   --line: rgba(17, 17, 17, 0.12);
+
+  /* Latin by default — Barlow Condensed and Inter (loaded in
+     app/layout.tsx) carry no Arabic glyphs at all, so Arabic pages switch
+     both to Cairo instead, keyed off the `dir` attribute the [locale]
+     layout sets on <html>. One family standing in for both display and
+     body roles on Arabic pages, since Cairo's own weight range (200-1000)
+     already spans what Barlow/Inter split across two families. */
+  --font-display: var(--font-display-latin);
+  --font-body: var(--font-body-latin);
+}
+
+html[dir="rtl"] {
+  --font-display: var(--font-arabic);
+  --font-body: var(--font-arabic);
 }
 
 @theme inline {
@@ -49,6 +63,42 @@ body {
   line-height: 0.92;
   letter-spacing: -0.02em;
   text-transform: uppercase;
+}
+
+/* Arabic is cursive — its letterforms join into ligatures, and ANY added
+   letter-spacing (positive or negative) can visually disconnect a joined
+   letter from its neighbour, which reads as broken text, not styled text.
+   text-transform: uppercase is harmless (Arabic has no case) and left
+   alone; tracking is reset to normal everywhere, including Tailwind's own
+   `tracking-[...]` arbitrary-value utilities (a handful of small uppercase
+   labels in the calculators use these directly rather than via `.eyebrow`)
+   — `[class*="tracking-"]` catches those by matching the raw class
+   attribute rather than needing to enumerate every value used. */
+html[dir="rtl"] .display,
+html[dir="rtl"] .eyebrow,
+html[dir="rtl"] [class*="tracking-"] {
+  letter-spacing: normal;
+}
+
+/* `.display`'s 0.92 line-height is tuned for Barlow Condensed's compact
+   vertical metrics. Cairo's Arabic glyphs reach taller (ascenders, and the
+   diacritic-adjacent strokes some letters carry), so that same tight
+   leading crowds — and inside a `.line-mask` reveal wrapper, can clip —
+   stacked lines of Arabic display text. Loosened only for RTL, site-wide
+   (every `.display` headline uses Cairo there, not just the hero). */
+html[dir="rtl"] .display {
+  line-height: 1.25;
+}
+
+/* The hero headline runs at this site's single largest type size (up to
+   9rem) and sits inside three individually-`.line-mask`-clipped lines, so
+   it's the one place a size reduction is worth making too, not just the
+   line-height fix above — asked for directly: smaller, not tiny. ~15%
+   off the low end and clamp ceiling; the viewport-relative middle term
+   also comes down proportionally so the curve still feels continuous
+   rather than kinking at one breakpoint. */
+html[dir="rtl"] .hero-h1 {
+  font-size: clamp(2.5rem, 9vw, 7.7rem);
 }
 
 /* Small tracked label that opens each section — repeated pattern keeps
