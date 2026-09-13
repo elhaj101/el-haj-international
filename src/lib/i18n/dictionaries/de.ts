@@ -55,16 +55,16 @@ const de: Dictionary = {
     eyebrow: "So funktioniert's",
     steps: [
       {
-        title: "Sendung schätzen",
-        body: 'Klicken Sie auf „Sendung schätzen", wählen Sie das Zielland und dann, ob es sich um ein privates Paket oder eine Geschäftssendung handelt. Sie erhalten sofort eine Preisspanne — ohne Formular und ohne Konto.',
+        title: "Rechner nutzen",
+        body: "Ziel und Sendungsart wählen. Sofortpreis — ohne Formular, ohne Konto.",
       },
       {
-        title: "Konto erstellen",
-        body: 'Klicken Sie auf „Registrieren", wählen Sie privat oder geschäftlich, und beantworten Sie ein paar kurze Fragen dazu, wer sendet und wer empfängt. Es wird nichts hochgeladen oder gespeichert — es gibt noch kein Backend —, das bereitet also nur Ihre Angaben vor, statt ein echtes Konto zu eröffnen.',
+        title: "Auftrag senden",
+        body: "Anfrage-Button antippen und Ihre Angaben per WhatsApp schicken. Wir bestätigen den Endpreis.",
       },
       {
-        title: "Bestellung bestätigen",
-        body: "Auf dem letzten Bildschirm kopieren Sie Ihre Zusammenfassung und senden sie uns per WhatsApp. Diese Nachricht bestätigt die Sendung — wir antworten mit den endgültigen Kosten und den nächsten Schritten.",
+        title: "Auf den Fahrer warten",
+        body: "Wir übernehmen Abholung, Versand und Zollabfertigung. Ihr Paket kommt an die Tür.",
       },
     ],
   },

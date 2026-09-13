@@ -55,16 +55,16 @@ const en: Dictionary = {
     eyebrow: "How it works",
     steps: [
       {
-        title: "Estimate a shipment",
-        body: 'Press "Estimate a shipment," choose the destination, then say whether it\'s a personal parcel or a business shipment. You get a price range immediately — no form and no account needed yet.',
+        title: "Use the calculator",
+        body: "Pick your destination and shipment type. Instant price — no forms, no account.",
       },
       {
-        title: "Create an account",
-        body: 'Press "Sign up," pick private or business, and answer a short set of questions about who is sending and who is receiving. Nothing is uploaded or stored — there is no backend yet — so this prepares your details rather than opening a real login.',
+        title: "Send us your order",
+        body: "Tap the inquiry button and send your details on WhatsApp. We confirm the final cost.",
       },
       {
-        title: "Confirm order",
-        body: "On the last screen, copy your summary and send it to us on WhatsApp. That message is what actually confirms the shipment — we reply with the final cost and what happens next.",
+        title: "Wait for our driver",
+        body: "We handle pickup, shipping and customs clearance. Your parcel arrives at the door.",
       },
     ],
   },

@@ -8,26 +8,17 @@ import { ContainerMark } from "./Logo";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 /**
- * Concrete, button-by-button steps — literally what happens when you click
- * through this site, not a description of the shipping process itself.
+ * Three short marketing steps: use the calculator, send the order, wait for
+ * the driver. Deliberately terse — one line of benefit each, no narration.
  *
- * This used to be four deliberately abstract steps (tell us what you need →
- * we plan the route → we handle the complexity → it arrives), kept vague so
- * neither the private nor the business audience read it as "not for me." Per
- * direct instruction this now walks through the actual three clicks instead.
- * That necessarily uses the private-shipping path's own words ("recipient",
- * "WhatsApp") since that is the flow most visitors take and the one this site
- * exposes literal button labels for — a business visitor's form under
- * "Create an account" asks about a supplier and order volume instead of a
- * recipient, but the three-click shape (estimate → account → confirm) is the
- * same either way.
- *
- * Names the real buttons ("Estimate a shipment", "Create an account") and
- * describes what each screen actually does — including the honest limits:
- * there is no backend yet, so step 2 fills in paperwork rather than opening a
- * real login, and step 3's "confirm" is a WhatsApp message, not a checkout.
- * See the big comment at the top of signup/page.tsx for why that's the
- * correct posture for now, not a shortcut taken here.
+ * Two earlier versions are worth knowing about, because both were replaced
+ * for reasons that still apply. The first was four abstract steps (tell us
+ * what you need → we plan the route → we handle the complexity → it
+ * arrives), vague so neither audience read it as "not for me". The second
+ * walked through the site's own UI click by click, including a "Create an
+ * account" step. That second version is now factually wrong, not just
+ * long: customers don't need an account to ship — the path is calculator →
+ * inquiry → delivery, and the copy says exactly that.
  *
  * The track scrolls horizontally at EVERY breakpoint. It used to be desktop-
  * only, which meant a phone got three (formerly four) static stacked
