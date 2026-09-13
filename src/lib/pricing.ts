@@ -29,6 +29,10 @@
    4-Resources/lebanon-customs-container-consolidation-2026-08-29.md
    =================================================================== */
 
+import { eur, num, pct } from "@/components/calculator/format";
+import type { Dictionary } from "./i18n/dictionary";
+import type { Locale } from "./i18n/locales";
+
 /** Everything in (A) was last verified on this date. Surfaced in the UI. */
 export const CUSTOMS_DATA_AS_OF = "April 2022 (FIDI) / August 2026 (customs.gov.lb)";
 
@@ -233,28 +237,44 @@ export interface PersonalQuote {
  * says so. VAT is deliberately not stacked on here — the deemed-value
  * treatment in the source is duty + security fee.
  */
-function personalDuty(weightKg: number, categoryId?: string) {
+function personalDuty(
+  weightKg: number,
+  categoryId: string | undefined,
+  dict: Dictionary,
+  locale: Locale,
+) {
   const category = getCategory(categoryId ?? "used-household");
+  const categoryLabel = dict.cargoCategories[category.id]?.label ?? category.id;
   const deemedEur = weightKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
   const dutyEur = round(deemedEur * (category.duty + SECURITY_FEE_RATE));
+  const t = dict.pricingSentences;
 
   const dutyBasis =
     category.duty === 0
-      ? `${category.label} come in duty free — this is the ` +
-        `${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee only, on a deemed ` +
-        `value of USD ${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg for ~${weightKg} kg.`
-      : `~${weightKg} kg at a deemed value of USD ` +
-        `${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg, charged at ` +
-        `${(category.duty * 100).toFixed(1).replace(/\.0$/, "")}% for ` +
-        `${category.label.toLowerCase()} plus a ` +
-        `${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee.`;
+      ? t.personalDutyFree({
+          categoryLabel,
+          securityFeePct: pct(SECURITY_FEE_RATE, locale),
+          deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+          weightKg,
+        })
+      : t.personalDutyCharged({
+          weightKg,
+          deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+          dutyPct: pct(category.duty, locale),
+          categoryLabel,
+          securityFeePct: pct(SECURITY_FEE_RATE, locale),
+        });
 
   return { dutyEur, dutyBasis };
 }
 
 export function calculatePersonalQuote(
   input: PersonalQuoteInput,
+  dict: Dictionary,
+  locale: Locale,
 ): PersonalQuote {
+  const t = dict.pricingSentences;
+
   if (input.mode === "boxes") {
     const box = getBoxSize(input.boxId ?? "L");
     const numBoxes = Math.max(1, Math.round(input.numBoxes || 1));
@@ -262,7 +282,12 @@ export function calculatePersonalQuote(
 
     // Weight is implied from the box size, at a typical fill.
     const weightKg = typicalBoxKg(box) * numBoxes;
-    const { dutyEur, dutyBasis } = personalDuty(weightKg, input.categoryId);
+    const { dutyEur, dutyBasis } = personalDuty(
+      weightKg,
+      input.categoryId,
+      dict,
+      locale,
+    );
 
     // What the same parcel would cost per kilo.
     const alternativeEur = round(weightKg * PERSONAL_PER_KG_EUR);
@@ -273,22 +298,37 @@ export function calculatePersonalQuote(
       dutyEur,
       totalEur: round(shippingEur + dutyEur),
       basis:
-        (numBoxes === 1
-          ? `One ${box.label} box at a flat €${box.priceEur}.`
-          : `${numBoxes} × ${box.label} boxes at a flat €${box.priceEur} each.`) +
-        ` The price is the same whatever it weighs.`,
+        numBoxes === 1
+          ? t.personalBasisOneBox({
+              boxLabel: box.label,
+              priceEur: eur(box.priceEur, locale),
+            })
+          : t.personalBasisManyBoxes({
+              numBoxes,
+              boxLabel: box.label,
+              priceEur: eur(box.priceEur, locale),
+            }),
       dutyBasis,
       alternativeEur,
-      alternativeLabel:
-        `A normally packed ${box.label} box holds about ${typicalBoxKg(box)} kg, ` +
-        `so ${numBoxes === 1 ? "this" : "these"} would be roughly ${weightKg} kg ` +
-        `— €${alternativeEur.toFixed(0)} at €${PERSONAL_PER_KG_EUR.toFixed(2)}/kg.`,
+      alternativeLabel: t.personalAlternativeFromBoxes({
+        boxLabel: box.label,
+        typicalKg: typicalBoxKg(box),
+        numBoxes,
+        weightKg,
+        altEur: eur(alternativeEur, locale),
+        perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+      }),
     };
   }
 
   const weightKg = Math.max(0, input.weightKg || 0);
   const shippingEur = round(weightKg * PERSONAL_PER_KG_EUR);
-  const { dutyEur, dutyBasis } = personalDuty(weightKg, input.categoryId);
+  const { dutyEur, dutyBasis } = personalDuty(
+    weightKg,
+    input.categoryId,
+    dict,
+    locale,
+  );
 
   // The cheapest whole number of boxes that would hold this weight.
   const box = getBoxSize(input.boxId ?? "L");
@@ -301,14 +341,20 @@ export function calculatePersonalQuote(
     weightKg,
     dutyEur,
     totalEur: round(shippingEur + dutyEur),
-    basis: `${weightKg} kg at a flat €${PERSONAL_PER_KG_EUR.toFixed(2)} per kilo.`,
+    basis: t.personalBasisPerKg({
+      weightKg,
+      perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+    }),
     dutyBasis,
     alternativeEur,
     alternativeLabel:
       alternativeEur === null
         ? ""
-        : `That weight normally fills about ${boxesNeeded} ${box.label} ` +
-          `box${boxesNeeded === 1 ? "" : "es"} — €${alternativeEur.toFixed(0)} at the flat box price.`,
+        : t.personalAlternativeFromWeight({
+            boxesNeeded,
+            boxLabel: box.label,
+            altEur: eur(alternativeEur, locale),
+          }),
   };
 }
 
@@ -326,24 +372,19 @@ export function calculatePersonalQuote(
 
 export interface Destination {
   id: string;
-  name: string;
-  /** Shown under the big country name. */
-  gateway: string;
 }
 
 /*
  * Flag artwork is deliberately NOT a field here. It used to be a Unicode emoji
  * string, which Chrome on Windows renders as the literal letters "LB". The
  * artwork now lives in `components/Flag.tsx`, keyed by the `id` above.
+ *
+ * Display name and gateway are deliberately not here either, for the same
+ * reason CargoCategory's label/blurb/caveat moved out — each locale's
+ * dictionary carries its own `destinations[id]`.
  */
 
-export const DESTINATIONS: Destination[] = [
-  {
-    id: "LB",
-    name: "Lebanon",
-    gateway: "Port of Beirut",
-  },
-];
+export const DESTINATIONS: Destination[] = [{ id: "LB" }];
 
 /* -------------------------------------------------------------------
    CARGO CATEGORIES
@@ -363,14 +404,17 @@ export const DESTINATIONS: Destination[] = [
 
 export interface CargoCategory {
   id: string;
-  label: string;
-  blurb: string;
   basis: "weight" | "value";
   /** Customs duty rate. VAT and the security fee are added on top. */
   duty: number;
-  /** Caveat surfaced when this category is selected, if any. */
-  caveat?: string;
 }
+
+/**
+ * Display strings (label, blurb, caveat) deliberately do NOT live on
+ * CargoCategory — this file is the numeric single source of truth, kept
+ * 100% language-independent. Each locale's dictionary carries its own
+ * `cargoCategories[id]`; look those up instead of reading a field here.
+ */
 
 /**
  * Every rate below is sourced — from customs.gov.lb's own commodity tool
@@ -384,123 +428,21 @@ export interface CargoCategory {
  * customs tariff schedule confirms the rates.
  */
 export const CARGO_CATEGORIES: CargoCategory[] = [
-  {
-    id: "used-household",
-    label: "Used household goods",
-    blurb: "Furniture, kitchenware, personal effects",
-    basis: "weight",
-    duty: USED_HOUSEHOLD_DUTY_RATE,
-    caveat:
-      "Carries a 3-year no-resale undertaking in Lebanon. Not suitable for anyone restocking a shop.",
-  },
-  {
-    id: "used-clothing",
-    label: "Used clothing",
-    blurb: "Worn garments and textiles (HS 6309.00)",
-    basis: "value",
-    duty: 0.05,
-    caveat:
-      "This line carries an \"EC\" government control we could not fully identify — confirm with a broker before shipping at volume.",
-  },
-  {
-    id: "used-appliances",
-    label: "Appliances (used)",
-    blurb: "Duty free with the correct documents",
-    basis: "value",
-    duty: 0,
-    caveat:
-      "FIDI's own prohibited-items list contradicts this row for battery and domestic appliances. Needs a direct answer from a broker.",
-  },
-  {
-    id: "computers",
-    label: "Computers & laptops",
-    blurb: "Duty free — VAT and security fee only",
-    basis: "value",
-    duty: 0,
-  },
-  {
-    id: "apparel",
-    label: "Clothing & apparel (new)",
-    blurb: "New garments",
-    basis: "value",
-    duty: 0.05,
-  },
-  {
-    id: "phones",
-    label: "Mobile phones",
-    blurb: "Handsets and tablets",
-    basis: "value",
-    duty: 0.05,
-  },
-  {
-    id: "watches",
-    label: "Watches",
-    blurb: "Wristwatches and clocks",
-    basis: "value",
-    duty: 0.05,
-  },
-  {
-    id: "shoes",
-    label: "Shoes",
-    blurb: "Footwear, new",
-    basis: "value",
-    duty: 0.1,
-    caveat:
-      "A floor of 7,500 LL per pair applies, which can exceed the percentage duty on cheap footwear.",
-  },
-  {
-    id: "bags",
-    label: "Handbags & luggage",
-    blurb: "Bags and cases",
-    basis: "value",
-    duty: 0.1,
-    caveat: "A floor of 4,500 LL per piece applies.",
-  },
-  {
-    id: "appliances-new",
-    label: "Appliances (new)",
-    blurb: "White goods and small appliances",
-    basis: "value",
-    duty: 0.15,
-  },
-  {
-    id: "perfume",
-    label: "Perfume",
-    blurb: "Perfumes and toilet waters",
-    basis: "value",
-    duty: 0.15,
-  },
-  {
-    id: "cosmetics",
-    label: "Cosmetics & makeup",
-    blurb: "A common diaspora request from German drugstores",
-    basis: "value",
-    duty: 0.15,
-  },
-  {
-    id: "linens",
-    label: "Linens & towels",
-    blurb: "Bedsheets, towels, household textiles",
-    basis: "value",
-    duty: 0.15,
-    caveat: "A floor of 3,375 LL applies.",
-  },
-  {
-    id: "furniture-new",
-    label: "Furniture (new)",
-    blurb: "New furniture and household articles",
-    basis: "value",
-    duty: 0.3,
-  },
-  {
-    id: "commercial",
-    label: "Commercial stock",
-    blurb: "Goods imported to be resold",
-    basis: "value",
-    duty: 0.465,
-    caveat:
-      "Declared commercially. Requires a legalised commercial invoice and a certificate of origin, which personal-effects shipments do not.",
-  },
+  { id: "used-household", basis: "weight", duty: USED_HOUSEHOLD_DUTY_RATE },
+  { id: "used-clothing", basis: "value", duty: 0.05 },
+  { id: "used-appliances", basis: "value", duty: 0 },
+  { id: "computers", basis: "value", duty: 0 },
+  { id: "apparel", basis: "value", duty: 0.05 },
+  { id: "phones", basis: "value", duty: 0.05 },
+  { id: "watches", basis: "value", duty: 0.05 },
+  { id: "shoes", basis: "value", duty: 0.1 },
+  { id: "bags", basis: "value", duty: 0.1 },
+  { id: "appliances-new", basis: "value", duty: 0.15 },
+  { id: "perfume", basis: "value", duty: 0.15 },
+  { id: "cosmetics", basis: "value", duty: 0.15 },
+  { id: "linens", basis: "value", duty: 0.15 },
+  { id: "furniture-new", basis: "value", duty: 0.3 },
+  { id: "commercial", basis: "value", duty: 0.465 },
 ];
 
 /**
@@ -556,7 +498,11 @@ export interface QuoteBreakdown {
   rangeHighEur: number;
 }
 
-export function calculateQuote(input: QuoteInput): QuoteBreakdown {
+export function calculateQuote(
+  input: QuoteInput,
+  dict: Dictionary,
+  locale: Locale,
+): QuoteBreakdown {
   const weight = Math.max(0, input.weightKg || 0);
   const chargeableKg = Math.max(weight, MIN_CHARGEABLE_KG);
   const minimumApplied = weight > 0 && weight < MIN_CHARGEABLE_KG;
@@ -564,6 +510,7 @@ export function calculateQuote(input: QuoteInput): QuoteBreakdown {
   const freightEur = chargeableKg * FREIGHT_EUR_PER_KG;
   const clearanceEur = CLEARANCE_FEE_EUR;
   const category = getCategory(input.categoryId);
+  const t = dict.pricingSentences;
 
   let dutyEur: number;
   let dutyBasis: string;
@@ -573,20 +520,23 @@ export function calculateQuote(input: QuoteInput): QuoteBreakdown {
     const deemedEur =
       chargeableKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
     dutyEur = deemedEur * (category.duty + SECURITY_FEE_RATE);
-    dutyBasis =
-      `Assessed on a deemed value of USD ${DEEMED_VALUATION_USD_PER_KG.toFixed(2)}/kg ` +
-      `(${chargeableKg} kg), at ${(category.duty * 100).toFixed(1)}% duty ` +
-      `+ ${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee. What the goods are ` +
-      `actually worth does not change this figure.`;
+    dutyBasis = t.businessDutyByWeight({
+      deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+      chargeableKg,
+      dutyPct: pct(category.duty, locale),
+      securityFeePct: pct(SECURITY_FEE_RATE, locale),
+    });
   } else {
     const value = Math.max(0, input.declaredValueEur || 0);
     dutyEur = value * (category.duty + LEBANON_VAT_RATE + SECURITY_FEE_RATE);
-    dutyBasis =
-      `Assessed on declared value (€${value.toFixed(0)}) at ` +
-      `${(category.duty * 100).toFixed(0)}% duty + ` +
-      `${(LEBANON_VAT_RATE * 100).toFixed(0)}% VAT + ` +
-      `${(SECURITY_FEE_RATE * 100).toFixed(0)}% security fee for ` +
-      `${category.label.toLowerCase()}.`;
+    const categoryLabel = dict.cargoCategories[category.id]?.label ?? category.id;
+    dutyBasis = t.businessDutyByValue({
+      valueEur: eur(value, locale),
+      dutyPct: pct(category.duty, locale),
+      vatPct: pct(LEBANON_VAT_RATE, locale),
+      securityFeePct: pct(SECURITY_FEE_RATE, locale),
+      categoryLabel,
+    });
   }
 
   const totalEur = freightEur + clearanceEur + dutyEur;
