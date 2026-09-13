@@ -81,6 +81,8 @@ const en: Dictionary = {
       },
     ],
     scrubberLabel: "Drag to revisit the steps",
+    prevStep: "Previous step",
+    nextStep: "Next step",
   },
 
   calculatorPromo: {

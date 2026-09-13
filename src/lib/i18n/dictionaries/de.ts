@@ -86,6 +86,8 @@ const de: Dictionary = {
       },
     ],
     scrubberLabel: "Ziehen, um die Schritte erneut anzusehen",
+    prevStep: "Vorheriger Schritt",
+    nextStep: "Nächster Schritt",
   },
 
   calculatorPromo: {

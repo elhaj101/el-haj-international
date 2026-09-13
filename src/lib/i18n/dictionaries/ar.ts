@@ -97,6 +97,8 @@ const ar: Dictionary = {
       },
     ],
     scrubberLabel: "اسحب للرجوع إلى الخطوات",
+    prevStep: "الخطوة السابقة",
+    nextStep: "الخطوة التالية",
   },
 
   calculatorPromo: {

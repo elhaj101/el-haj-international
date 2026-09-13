@@ -11,6 +11,24 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
 import { motionSignFor, type Locale } from "@/lib/i18n/locales";
 import ScrollCue from "@/components/ScrollCue";
 
+/** A single thin stroke, no fill — deliberately restrained rather than a
+    solid caret, to match the site's other small marks (ScrollCue's own
+    chevrons, the nav's arrow glyphs). Used only by the mobile prev/next
+    buttons below. */
+function ThinChevron({ pointing }: { pointing: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d={pointing === "right" ? "M9 5l7 7-7 7" : "M15 5l-7 7 7 7"}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /**
  * Three short marketing steps: use the calculator, send the order, wait for
  * the driver. Deliberately terse — one line of benefit each, no narration.
@@ -60,6 +78,13 @@ export default function HowItWorks({
   // set as attributes from the GSAP code) so the accessible role, the tab
   // stop and the cursor all arrive together with the behaviour.
   const [zipper, setZipper] = useState(false);
+
+  // The mobile prev/next buttons call into the GSAP effect's own glideTo —
+  // they don't reimplement it. Set once the effect has something to offer,
+  // read from plain onClick handlers in the JSX below.
+  const controlsRef = useRef<{ prev: () => void; next: () => void } | null>(
+    null,
+  );
 
   // Lenis owns the scroll position, so removing 3060px of document height
   // has to be announced to it or it will fight the correction. Captured in
@@ -288,6 +313,18 @@ export default function HowItWorks({
         });
       };
 
+      // Backing the mobile prev/next buttons. Deliberately step by INDEX
+      // (current step ± one), not by direction on the rail — "next" always
+      // means "the following step" regardless of which physical side of the
+      // screen it happens to sit on, same as the Home/End keys above.
+      // glideTo already clamps, so pressing prev at step one (or next at the
+      // last step) is a harmless no-op rather than something to special-case.
+      const unit = 1 / (STEPS.length - 1);
+      controlsRef.current = {
+        prev: () => glideTo(snapP(currentP()) - unit),
+        next: () => glideTo(snapP(currentP()) + unit),
+      };
+
       const [drag] = Draggable.create(marker, {
         type: "x",
         // Explicit numbers rather than `bounds: rail` — the marker is taller
@@ -328,7 +365,6 @@ export default function HowItWorks({
       // Arrow keys step one panel at a time; Home/End jump to the ends.
       const onKey = (e: KeyboardEvent) => {
         if (!detached) return;
-        const unit = 1 / (STEPS.length - 1);
         const now = snapP(currentP());
         const map: Record<string, number> = {
           ArrowRight: now + (rtl ? -unit : unit),
@@ -354,6 +390,7 @@ export default function HowItWorks({
         marker.removeEventListener("keydown", onKey);
         window.removeEventListener("resize", onResize);
         drag.kill();
+        controlsRef.current = null;
       };
     },
     { scope: root },
@@ -386,10 +423,30 @@ export default function HowItWorks({
         </div>
       </div>
 
-      <div className="rail-wrap absolute inset-x-0 bottom-12 z-10 mx-auto max-w-[1400px] px-6 lg:bottom-16 lg:px-10">
+      <div className="rail-wrap absolute inset-x-0 bottom-12 z-10 mx-auto flex max-w-[1400px] items-center gap-2 px-6 lg:bottom-16 lg:gap-0 lg:px-10">
+        {/* Dragging the mark is the primary control once it's a slider, but
+            it needs a small element precisely under a fingertip — reliable
+            on a mouse, not always on a touchscreen. These are the fallback:
+            same step-by-step motion as the arrow keys, in a large tap
+            target. DOM order, not left/right classes — under `dir="rtl"`
+            the browser already reverses a `flex-direction: row`'s main axis,
+            so the prev button (first in markup) lands on the correct side
+            in both directions without any rtl-conditional class. Hidden at
+            `lg` and up: dragging isn't unreliable with a mouse. */}
+        {zipper && (
+          <button
+            type="button"
+            onClick={() => controlsRef.current?.prev()}
+            aria-label={dict.howItWorks.prevStep}
+            className="rail-nav-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:text-fg active:text-accent lg:hidden"
+          >
+            <ThinChevron pointing={rtl ? "right" : "left"} />
+          </button>
+        )}
+
         {/* Taller hit area than the 1px hairline it draws, so the rail is
             tappable on a phone once it becomes a control. */}
-        <div className="rail relative h-px w-full bg-line before:absolute before:inset-x-0 before:-top-4 before:h-9 before:content-['']">
+        <div className="rail relative h-px w-full flex-1 bg-line before:absolute before:inset-x-0 before:-top-4 before:h-9 before:content-['']">
           {/* origin is set from JS too, since GSAP inlines transform-origin
               when it takes over the element; this class is what holds under
               reduced motion, where none of that JS runs. */}
@@ -414,12 +471,32 @@ export default function HowItWorks({
                   "aria-valuemin": 1,
                   "aria-valuemax": STEPS.length,
                   "aria-valuenow": STEPS.length,
+                  // Lenis attaches its own touch listeners to the document
+                  // and, on a gesture that starts moving, calls
+                  // preventDefault() to run its scroll physics — racing
+                  // GSAP's Draggable for the SAME touchstart, which is what
+                  // made dragging the mark "sometimes" fail on a phone.
+                  // Lenis checks for this exact attribute (walking up from
+                  // the touched element) and skips a touch gesture entirely
+                  // when it finds it, handing the whole thing to Draggable.
+                  "data-lenis-prevent-touch": "",
                 }
               : { "aria-hidden": true })}
           >
             <ContainerMark className="h-6 w-[33px]" />
           </div>
         </div>
+
+        {zipper && (
+          <button
+            type="button"
+            onClick={() => controlsRef.current?.next()}
+            aria-label={dict.howItWorks.nextStep}
+            className="rail-nav-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 hover:text-fg active:text-accent lg:hidden"
+          >
+            <ThinChevron pointing={rtl ? "left" : "right"} />
+          </button>
+        )}
       </div>
 
       {/* Lifted clear of the progress rail, which already occupies the

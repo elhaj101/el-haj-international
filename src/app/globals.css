@@ -46,6 +46,14 @@ html[dir="rtl"] {
 
 html {
   scroll-behavior: auto; /* Lenis owns scrolling; never fight it */
+  /* Same token as `body`, not left to default white. Mobile Safari's rubber-
+     band overscroll (dragging past the very top or bottom of the page)
+     paints whatever `html` resolves to in the gap it reveals — `body`'s
+     background doesn't extend there. Only visible at the two ends of the
+     page, so the hero (the top of the document) is exactly where an
+     unset `html` background shows as a flash/margin of plain white against
+     its own dark video. */
+  background: var(--bg);
 }
 
 body {

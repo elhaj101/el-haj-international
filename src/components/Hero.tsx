@@ -158,6 +158,17 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
           // the page moves past, so the hero hands off rather than just
           // scrolling out. Runs at every breakpoint — this is the signature
           // moment on a phone too, not a desktop-only flourish.
+          // invalidateOnRefresh on both: every OTHER scrubbed/pinned trigger
+          // on the page (Statement, HowItWorks) already carries this. These
+          // two didn't, and they're the only ones measured in pixels against
+          // a mobile browser's viewport height — which can change under
+          // them (the address bar collapsing/expanding) between when the
+          // trigger is first built and any later ScrollTrigger.refresh()
+          // (HowItWorks' one-shot detach calls exactly that, once, whenever
+          // a visitor scrolls past it). Without this, a refresh recalculates
+          // start/end but keeps using whatever numeric end value the tween
+          // was first built with; with it, "bottom top" / "75% top" are
+          // re-resolved against the CURRENT height too.
           gsap.to(".hero-media", {
             yPercent: 18,
             scale: 1.1,
@@ -167,6 +178,7 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
               start: "top top",
               end: "bottom top",
               scrub: true,
+              invalidateOnRefresh: true,
             },
           });
           gsap.to(".hero-copy", {
@@ -178,6 +190,7 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
               start: "top top",
               end: "75% top",
               scrub: true,
+              invalidateOnRefresh: true,
             },
           });
 

@@ -88,6 +88,11 @@ export interface Dictionary {
         after the scroll-jack retires, it is the control for revisiting
         steps, so it needs a name a screen reader can announce. */
     scrubberLabel: string;
+    /** aria-labels for the mobile-only prev/next buttons that flank the
+        rail — the visible control is an unlabelled chevron, so these carry
+        the whole accessible name. */
+    prevStep: string;
+    nextStep: string;
   };
 
   calculatorPromo: {
