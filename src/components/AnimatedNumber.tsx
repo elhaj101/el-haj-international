@@ -23,8 +23,13 @@ export default function AnimatedNumber({
   const state = useRef({ v: value });
   const tween = useRef<gsap.core.Tween | null>(null);
   // Keep the latest formatter without restarting the tween when it changes.
+  // Assigned in a dep-less effect, not during render — a ref write during
+  // render is only safe if React never discards the render it happened in,
+  // which concurrent features don't guarantee.
   const fmt = useRef(format);
-  fmt.current = format;
+  useEffect(() => {
+    fmt.current = format;
+  });
 
   useEffect(() => {
     if (!el.current) return;
