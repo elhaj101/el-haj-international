@@ -61,7 +61,7 @@ export default function ScrollCue({
   return (
     <svg
       ref={root}
-      className={`scroll-cue pointer-events-none absolute bottom-6 end-6 hidden h-8 w-5 sm:block lg:end-10 ${
+      className={`scroll-cue pointer-events-none absolute bottom-6 end-6 h-8 w-5 lg:end-10 ${
         tone === "light" ? "text-white" : "text-fg"
       } ${className}`}
       viewBox="0 0 20 32"

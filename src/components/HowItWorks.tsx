@@ -229,6 +229,10 @@ export default function HowItWorks({
         if (detached) return;
         detached = true;
 
+        // NOT read after kill() — captured now, while scroll position is
+        // known-settled (see the velocity gate below), so this is a plain,
+        // reliable snapshot rather than something that has to survive
+        // whatever kill() itself does to it.
         const yBefore = window.scrollY;
         const hBefore = document.documentElement.scrollHeight;
 
@@ -255,6 +259,14 @@ export default function HowItWorks({
         // showing. resize() first: Lenis caches the scroll limit from the
         // old height and would clamp a scrollTo that it still thinks is out
         // of bounds.
+        //
+        // What actually corrects window.scrollY when kill() collapses the
+        // spacer turns out NOT to be reliable enough to lean on by itself —
+        // logged step by step, it lands exactly on yBefore-delta during
+        // wheel-driven scrolling but clamps to the page's new bottom limit
+        // during a plain programmatic scrollTo. Computing and applying the
+        // correction explicitly, as below, is the one path that measured
+        // correct in both cases.
         const delta = hBefore - document.documentElement.scrollHeight;
         if (delta > 0) {
           const l = lenisRef.current;
@@ -273,16 +285,68 @@ export default function HowItWorks({
         setZipper(true);
       };
 
+      let waitId: number | null = null;
+
+      // detach() computes its correction from a single snapshot of
+      // window.scrollY. That's exact once scrolling has settled, but not
+      // during a fast scroll: Lenis smooths the RENDERED position toward its
+      // own internal target over several frames, so window.scrollY lags
+      // behind however far the gesture has actually committed to — measured
+      // directly, a firm fling left a 1389px gap between the two at the
+      // instant this used to fire unconditionally. Correcting from the
+      // lagging value discards that gap, which is exactly what read as
+      // "something pulls me back" — a hard stop well short of a fast
+      // scroll's real target, landing around Pricing because that's roughly
+      // where this trigger sits.
+      //
+      // Lenis's own `velocity` is NOT the signal to gate on here, even
+      // though it looks like the obvious one — checked directly against its
+      // source (lenis.mjs's Animate.fromTo): with `duration`-based easing
+      // (what this site uses, not `lerp`-based), EVERY new wheel event
+      // restarts the ease from scratch — `currentTime = 0`, `from = value =
+      // <current position>`. Velocity is the delta from one animation frame
+      // to the next WITHIN that curve, and a curve that's 1 frame into a
+      // fresh restart has near-zero velocity almost by definition — so
+      // during a fast, continuous burst, `velocity` reads as settled
+      // constantly, exactly when it's least true.
+      //
+      // Watching window.scrollY itself looked like the fix but has the same
+      // problem one level up: Lenis's duration-based ease approaches its
+      // target asymptotically, so the tail of any tween moves the rendered
+      // position by a fraction of a pixel per frame while still very much
+      // running. Rounding scrollY to the nearest pixel and waiting for it to
+      // repeat reads that tail as "stopped" and fires mid-tween — which is
+      // exactly why this landed on the page's new scroll limit in some runs
+      // and the correct spot in others: a race against Lenis's own
+      // convergence, not a real stop.
+      //
+      // Lenis dispatches a real `scrollend` event once a tween's completed
+      // flag actually goes true (lenis.mjs's dispatchScrollendEvent) — on
+      // `window`, since this is the root instance with no wrapper element.
+      // That is the one signal here that can't be fooled by sub-pixel
+      // convergence. The timeout stays as a fallback for the case where
+      // this trigger fires while the visitor is mid-gesture and no
+      // scrollend ever arrives on its own within a reasonable wait.
+      const onScrollEnd = () => {
+        if (waitId !== null) {
+          window.clearTimeout(waitId);
+          waitId = null;
+        }
+        window.removeEventListener("scrollend", onScrollEnd);
+        detach();
+      };
+      const armDetach = () => {
+        window.addEventListener("scrollend", onScrollEnd);
+        waitId = window.setTimeout(onScrollEnd, 2000);
+      };
+
       // Deliberately NOT on the trigger's own onLeave. That fires mid-
-      // gesture, with Lenis still resolving momentum against a target
-      // computed for the old document height, which makes the height swap
-      // visible as a yank. Waiting until the section is half a screen behind
-      // lets the gesture settle, and puts any residual error off-screen.
+      // gesture, immediately handing off to armDetach()'s own wait above.
       ScrollTrigger.create({
         start: () => st.end + window.innerHeight * 0.5,
         end: "+=1",
         once: true,
-        onEnter: detach,
+        onEnter: armDetach,
       });
 
       // ---------------------------------------------------------------
@@ -389,6 +453,8 @@ export default function HowItWorks({
         rail.removeEventListener("pointerdown", onRailDown);
         marker.removeEventListener("keydown", onKey);
         window.removeEventListener("resize", onResize);
+        window.removeEventListener("scrollend", onScrollEnd);
+        if (waitId !== null) window.clearTimeout(waitId);
         drag.kill();
         controlsRef.current = null;
       };
