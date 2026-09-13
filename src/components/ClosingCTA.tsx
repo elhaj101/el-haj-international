@@ -14,6 +14,12 @@ import { asset } from "@/lib/asset";
  * copy addresses both audiences at once; at the point of conversion that
  * vagueness turns into a weak ask. So the visitor self-selects here — the same
  * fork the sign-up wizard makes — and lands in the right conversation.
+ *
+ * Framed as customer service and consultation, not a sales ask: both buttons
+ * open the same free WhatsApp conversation as before, just labelled by who's
+ * asking ("Personal parcels" / "Business inquiry") rather than what to do
+ * ("Ship with us" / "Trade with us") — matching the section's own point,
+ * that this is a no-obligation question, not a commitment.
  */
 export default function ClosingCTA() {
   const root = useRef<HTMLDivElement>(null);
@@ -26,45 +32,66 @@ export default function ClosingCTA() {
         return;
       }
 
+      // Guards against React 19 Strict Mode's dev-only double-invoke of this
+      // callback (mount, cleanup, mount again). useGSAP's revert only catches
+      // things created synchronously; everything here runs inside an async
+      // .then(), so the first, throwaway invocation would otherwise leave a
+      // second live SplitText + ScrollTrigger stacked on the same elements —
+      // measured (see Hero.tsx's fuller comment) to run and finish *before*
+      // React calls its cleanup, so a plain flag checked only at the top of
+      // the callback doesn't reliably stop it. Wrapping the async work in its
+      // own gsap.context() and reverting *that* on cleanup works regardless
+      // of ordering: it tears down whatever a stale invocation built, after
+      // the fact, instead of racing to prevent it before the fact.
+      let asyncCtx: gsap.Context | undefined;
+
       document.fonts.ready.then(() => {
-        const split = new SplitText(".cta-h2", {
-          type: "lines",
-          linesClass: "line",
-          mask: "lines",
-        });
+        if (!root.current) return;
 
-        gsap
-          .timeline({
-            scrollTrigger: { trigger: root.current, start: "top 72%" },
-          })
-          .from(split.lines, {
-            yPercent: 110,
-            duration: 1,
-            stagger: 0.1,
-            ease: "power4.out",
-          })
-          .from(
-            ".cta-item",
-            { y: 30, opacity: 0, duration: 0.85, stagger: 0.1 },
-            "-=0.6",
-          );
+        asyncCtx = gsap.context(() => {
+          const split = new SplitText(".cta-h2", {
+            type: "lines",
+            linesClass: "line",
+            mask: "lines",
+          });
 
-        // Photo drifts behind the panel. Small range — big parallax reads cheap.
-        gsap.fromTo(
-          ".cta-photo",
-          { yPercent: -6 },
-          {
-            yPercent: 6,
-            ease: "none",
-            scrollTrigger: {
-              trigger: root.current,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true,
+          gsap
+            .timeline({
+              scrollTrigger: { trigger: root.current, start: "top 72%" },
+            })
+            .from(split.lines, {
+              yPercent: 110,
+              duration: 1,
+              stagger: 0.1,
+              ease: "power4.out",
+            })
+            .from(
+              ".cta-item",
+              { y: 30, opacity: 0, duration: 0.85, stagger: 0.1 },
+              "-=0.6",
+            );
+
+          // Photo drifts behind the panel. Small range — big parallax reads cheap.
+          gsap.fromTo(
+            ".cta-photo",
+            { yPercent: -6 },
+            {
+              yPercent: 6,
+              ease: "none",
+              scrollTrigger: {
+                trigger: root.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
             },
-          },
-        );
+          );
+        }, root);
       });
+
+      return () => {
+        asyncCtx?.revert();
+      };
     },
     { scope: root },
   );
@@ -91,7 +118,7 @@ export default function ClosingCTA() {
           <div className="relative px-7 py-20 lg:px-16 lg:py-32">
             <p className="eyebrow cta-item">Get started</p>
             <h2 className="cta-h2 display mt-5 max-w-[13ch] text-[clamp(2.1rem,7vw,4.75rem)]">
-              Tell us what you need moved
+              Customer service and consultation — free
             </h2>
             <p className="cta-item measure mt-6 text-base text-muted lg:text-lg">
               No forms and no account needed to ask. Message us and we will tell
@@ -107,7 +134,7 @@ export default function ClosingCTA() {
                 rel="noopener noreferrer"
                 className="group inline-flex items-center justify-between gap-6 rounded-full bg-accent px-7 py-4 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
               >
-                Ship with us
+                Personal parcels
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
                   →
                 </span>
@@ -120,7 +147,7 @@ export default function ClosingCTA() {
                 rel="noopener noreferrer"
                 className="group inline-flex items-center justify-between gap-6 rounded-full border border-fg/20 px-7 py-4 text-sm font-semibold transition-colors duration-200 hover:border-accent hover:text-accent"
               >
-                Trade with us
+                Business inquiry
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
                   →
                 </span>
