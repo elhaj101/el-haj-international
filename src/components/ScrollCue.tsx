@@ -32,9 +32,9 @@ export default function ScrollCue({
 }: {
   /** "light" for the dark hero video, "dark" for the light sections below. */
   tone?: "light" | "dark";
-  /** Position overrides. Defaults to the bottom inline-START corner —
-      logical, not physical, so it sits bottom-left in English and German and
-      mirrors to bottom-right in Arabic, like everything else on this page.
+  /** Position overrides. Defaults to the bottom inline-END corner —
+      logical, not physical, so it sits bottom-right in English and German and
+      mirrors to bottom-left in Arabic, like everything else on this page.
       Sections with something already in that corner (HowItWorks' progress
       rail) move it up rather than restyle it. */
   className?: string;
@@ -61,7 +61,7 @@ export default function ScrollCue({
   return (
     <svg
       ref={root}
-      className={`scroll-cue pointer-events-none absolute bottom-6 start-6 hidden h-8 w-5 sm:block lg:start-10 ${
+      className={`scroll-cue pointer-events-none absolute bottom-6 end-6 hidden h-8 w-5 sm:block lg:end-10 ${
         tone === "light" ? "text-white" : "text-fg"
       } ${className}`}
       viewBox="0 0 20 32"
