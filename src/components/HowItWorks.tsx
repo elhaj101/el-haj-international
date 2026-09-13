@@ -7,35 +7,46 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ContainerMark } from "./Logo";
 
 /**
- * Deliberately abstract steps. The literal shipping sequence (drop-off →
- * consolidate → customs → delivery) only describes the forwarding side and
- * reads as irrelevant to a business sourcing goods. Home stays broad; the real
- * audience fork happens at sign-up.
+ * Concrete, button-by-button steps — literally what happens when you click
+ * through this site, not a description of the shipping process itself.
+ *
+ * This used to be four deliberately abstract steps (tell us what you need →
+ * we plan the route → we handle the complexity → it arrives), kept vague so
+ * neither the private nor the business audience read it as "not for me." Per
+ * direct instruction this now walks through the actual three clicks instead.
+ * That necessarily uses the private-shipping path's own words ("recipient",
+ * "WhatsApp") since that is the flow most visitors take and the one this site
+ * exposes literal button labels for — a business visitor's form under
+ * "Create an account" asks about a supplier and order volume instead of a
+ * recipient, but the three-click shape (estimate → account → confirm) is the
+ * same either way.
+ *
+ * Names the real buttons ("Estimate a shipment", "Create an account") and
+ * describes what each screen actually does — including the honest limits:
+ * there is no backend yet, so step 2 fills in paperwork rather than opening a
+ * real login, and step 3's "confirm" is a WhatsApp message, not a checkout.
+ * See the big comment at the top of signup/page.tsx for why that's the
+ * correct posture for now, not a shortcut taken here.
  *
  * The track scrolls horizontally at EVERY breakpoint. It used to be desktop-
- * only, which meant a phone got four static stacked paragraphs — the flattest
- * possible reading of the page.
+ * only, which meant a phone got three (formerly four) static stacked
+ * paragraphs — the flattest possible reading of the page.
  */
 const STEPS = [
   {
     n: "01",
-    title: "Tell us what you need",
-    body: "A pallet of household goods to Beirut, or a product you want sourced and supplied. One message is enough to start.",
+    title: "Estimate a shipment",
+    body: 'Press "Estimate a shipment," choose the destination, then say whether it\'s a personal parcel or a business shipment. You get a price range immediately — no form and no account needed yet.',
   },
   {
     n: "02",
-    title: "We plan the route",
-    body: "We consolidate your cargo into a container alongside other shipments, or connect you to the right supplier and terms.",
+    title: "Create an account",
+    body: 'Press "Sign up," pick private or business, and answer a short set of questions about who is sending and who is receiving. Nothing is uploaded or stored — there is no backend yet — so this prepares your details rather than opening a real login.',
   },
   {
     n: "03",
-    title: "We handle the complexity",
-    body: "Documentation, customs clearance through a licensed local broker, and every duty and fee calculated up front — not sprung on arrival.",
-  },
-  {
-    n: "04",
-    title: "It arrives",
-    body: "Delivered to the door of the person who is waiting for it, with the paperwork already settled.",
+    title: "Confirm order",
+    body: "On the last screen, copy your summary and send it to us on WhatsApp. That message is what actually confirms the shipment — we reply with the final cost and what happens next.",
   },
 ];
 
@@ -52,31 +63,77 @@ export default function HowItWorks() {
 
       const track = root.current?.querySelector<HTMLElement>(".h-track");
       if (!track) return;
-      const distance = () => Math.max(0, track.scrollWidth - window.innerWidth);
+      // How far the track itself must slide left to reveal the final panel —
+      // tied to the panels' real pixel width, because the last panel's right
+      // edge has to land exactly flush with the viewport's right edge.
+      const travelDistance = () =>
+        Math.max(0, track.scrollWidth - window.innerWidth);
+
+      // Three phases, not one continuous slide. This used to be a single
+      // ease:"none" tween spanning the *entire* scroll range: the very first
+      // pixel of scroll already dragged panel one away, and the section
+      // unpinned on the exact same pixel that finally settled the last panel
+      // into place — zero dwell time at either end, no matter how long the
+      // overall range was made. (A previous fix just lengthened that same
+      // single tween, which slowed the *middle* transition but left both
+      // edges exactly as instantaneous as before — the panels people
+      // actually complained about.) A hold before the slide starts, and
+      // another after it finishes, are what actually give the first and
+      // last panel real, static reading time.
+      //
+      // These are timeline-duration units, not seconds — scrub ignores real
+      // time and maps scroll fraction 0..1 straight onto timeline progress
+      // 0..1, so only the *ratio* between HOLD and TRAVEL matters.
+      const HOLD = 0.7;
+      const TRAVEL = Math.max(1, STEPS.length - 1) * 1.0;
+      const TOTAL = HOLD + TRAVEL + HOLD;
 
       gsap
         .timeline({
           scrollTrigger: {
             trigger: root.current,
             start: "top top",
-            end: () => "+=" + distance(),
+            // Sized in viewport-heights, like Statement.tsx's own pinned
+            // sweep ("+=200%") — independent of panel width/count, so this
+            // won't silently break again if a step is added or removed.
+            end: () => "+=" + TOTAL * window.innerHeight,
             scrub: 1,
             pin: true,
             invalidateOnRefresh: true,
           },
         })
-        .to(track, { x: () => -distance(), ease: "none" }, 0)
+        // Nothing is scheduled at time 0 — the gap from 0 to HOLD is itself
+        // the opening hold, panel one sitting still while the visitor scrolls
+        // through it.
+        .to(
+          track,
+          { x: () => -travelDistance(), duration: TRAVEL, ease: "none" },
+          HOLD,
+        )
         .to(
           ".rail-marker",
-          { xPercent: 100 * (STEPS.length - 1), ease: "none" },
-          0,
+          { xPercent: 100 * (STEPS.length - 1), duration: TRAVEL, ease: "none" },
+          HOLD,
         )
         .to(
           ".rail-fill",
           // Stop where the marker stops, not at the full rail width.
-          { scaleX: (STEPS.length - 1) / STEPS.length, ease: "none" },
-          0,
-        );
+          {
+            scaleX: (STEPS.length - 1) / STEPS.length,
+            duration: TRAVEL,
+            ease: "none",
+          },
+          HOLD,
+        )
+        // The closing hold. Without this, the timeline's own duration would
+        // just be HOLD + TRAVEL (wherever the last real tween ends) and
+        // scrub would stretch that across the *entire* configured scroll
+        // range anyway, silently erasing the trailing pause TOTAL was meant
+        // to reserve. An empty tween forces the timeline to actually be as
+        // long as TOTAL, so the last HOLD unit of scroll genuinely does
+        // nothing — the last panel sits fully settled and readable right up
+        // until the section releases.
+        .to({}, { duration: HOLD });
     },
     { scope: root },
   );

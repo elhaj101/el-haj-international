@@ -100,8 +100,8 @@ body {
 
   /* The "how it works" track is a horizontal strip that is only readable
      because ScrollTrigger translates it — that transform is layout-critical,
-     not decorative. With no scroll animation running, steps 02-04 would sit
-     outside an overflow-hidden section, unreachable. Stack them instead. */
+     not decorative. With no scroll animation running, the later steps would
+     sit outside an overflow-hidden section, unreachable. Stack them instead. */
   #how {
     height: auto !important;
     padding-block: 6rem !important;
