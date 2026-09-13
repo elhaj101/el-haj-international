@@ -8,6 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
+import ScrollCue from "@/components/ScrollCue";
 
 /**
  * Replaces the old cargo-category grid (household goods, electronics,
@@ -107,7 +108,11 @@ export default function CalculatorPromo({
   );
 
   return (
-    <section id="pricing" ref={root} className="px-6 py-24 lg:px-10 lg:py-40">
+    <section
+      id="pricing"
+      ref={root}
+      className="relative px-6 py-24 lg:px-10 lg:py-40"
+    >
       <div className="mx-auto max-w-[1400px]">
         <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-20">
           <div>
@@ -159,6 +164,8 @@ export default function CalculatorPromo({
           </div>
         </div>
       </div>
+
+      <ScrollCue />
     </section>
   );
 }

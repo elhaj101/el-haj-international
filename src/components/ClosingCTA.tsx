@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { whatsappLink } from "@/lib/pricing";
+import ScrollCue from "@/components/ScrollCue";
 import { asset } from "@/lib/asset";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
@@ -152,6 +153,12 @@ export default function ClosingCTA({ dict, locale }: { dict: Dictionary; locale:
                 </span>
               </a>
             </div>
+
+            {/* Anchored to this inner panel, not the <section>. The section
+                is just `pb-24` with no height of its own, so a cue placed on
+                it would float in the gap below the card rather than sit in
+                the card's corner. */}
+            <ScrollCue />
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { SplitText } from "gsap/SplitText";
 import { asset } from "@/lib/asset";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { motionSignFor, type Locale } from "@/lib/i18n/locales";
+import ScrollCue from "@/components/ScrollCue";
 
 /**
  * The signature moment: a container is craned across the viewport while the
@@ -161,6 +162,8 @@ export default function Statement({
           {dict.statement.headline}
         </h2>
       </div>
+
+      <ScrollCue />
     </section>
   );
 }

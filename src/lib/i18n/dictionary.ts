@@ -20,6 +20,20 @@
 export interface RichSegment {
   text: string;
   strong?: boolean;
+  /**
+   * Turns this segment into a word that cycles. `text` is the resting word
+   * shown first; the page then rotates through these in turn, each in its
+   * own colour, and loops back to `text`.
+   *
+   * Per-locale rather than one shared list of country codes, because the
+   * substitution is grammatical, not lexical. German "zwischen" governs the
+   * dative, so "die Niederlande" has to appear as "den Niederlanden" in this
+   * sentence and nowhere else; English wants the article on "the
+   * Netherlands" but not on "Germany". A shared list would force every
+   * locale to accept whatever case and article the first one happened to
+   * need.
+   */
+  rotateThrough?: string[];
 }
 
 export interface Dictionary {
@@ -38,8 +52,6 @@ export interface Dictionary {
   };
 
   hero: {
-    eyebrowCity: string;
-    eyebrowRoute: string;
     /** Three short lines, matching the three `.line-mask` wrappers in
         Hero.tsx — kept short deliberately (see that file's own comment on
         why long lines risk an unplanned wrap at this display size). */
@@ -72,6 +84,10 @@ export interface Dictionary {
       title: string;
       body: string;
     }[];
+    /** Accessible name for the container mark once it becomes a slider —
+        after the scroll-jack retires, it is the control for revisiting
+        steps, so it needs a name a screen reader can announce. */
+    scrubberLabel: string;
   };
 
   calculatorPromo: {

@@ -16,15 +16,28 @@ const en: Dictionary = {
   },
 
   hero: {
-    eyebrowCity: "Hamburg",
-    eyebrowRoute: "Europe to the Middle East",
     headlineLine1: "Send anything",
     headlineLine2: "from Europe",
     headlineLine3Lead: "to",
     destinationName: "Lebanon",
     subtitle: [
       { text: "Consolidated container shipping and trading between " },
-      { text: "Europe", strong: true },
+      {
+        text: "Europe",
+        strong: true,
+        rotateThrough: [
+          "Germany",
+          "France",
+          "the Netherlands",
+          "Belgium",
+          "Italy",
+          "Spain",
+          "Sweden",
+          "Denmark",
+          "Austria",
+          "Poland",
+        ],
+      },
       { text: " and " },
       { text: "the Middle East", strong: true },
       { text: "." },
@@ -67,6 +80,7 @@ const en: Dictionary = {
         body: "We handle pickup, shipping and customs clearance. Your parcel arrives at the door.",
       },
     ],
+    scrubberLabel: "Drag to revisit the steps",
   },
 
   calculatorPromo: {

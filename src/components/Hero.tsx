@@ -9,6 +9,7 @@ import { whatsappLink } from "@/lib/pricing";
 import { asset } from "@/lib/asset";
 import Flag from "@/components/Flag";
 import RichText from "@/components/RichText";
+import ScrollCue from "@/components/ScrollCue";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, motionSignFor, type Locale } from "@/lib/i18n/locales";
 
@@ -180,14 +181,6 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
             },
           });
 
-          // Each chevron dims and brightens in turn, top to bottom — a wave
-          // travelling downward, not a static icon.
-          gsap.to(".scroll-chevron", {
-            opacity: (i, t) => Number(t.getAttribute("opacity")) * 0.25,
-            duration: 0.6,
-            stagger: { each: 0.15, repeat: -1, yoyo: true },
-            ease: "sine.inOut",
-          });
         }, root);
       });
 
@@ -235,9 +228,6 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
 
       <div className="hero-copy relative flex h-full flex-col justify-end px-6 pb-16 lg:px-10 lg:pb-20">
         <div className="mx-auto w-full max-w-[1400px]">
-          <p className="eyebrow hero-fade mb-5 !text-white/70">
-            {t.eyebrowCity} <span className="text-accent">·</span> {t.eyebrowRoute}
-          </p>
           {/* Three explicit lines rather than SplitText's automatic
               line-detection: SplitText rebuilds this element's DOM by
               measuring and re-wrapping text, and every other place it's used
@@ -266,7 +256,14 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
               </span>
             </span>
           </h1>
-          <p className="hero-fade measure mt-6 text-base leading-relaxed text-white/75 lg:text-lg">
+          <p
+            // Opts this paragraph into RotatingWord's height reservation: the
+            // cycling country name can rewrap the sentence onto another line,
+            // and this column is bottom-anchored, so without it the headline
+            // above lifts every time a long name comes round.
+            data-rotating-host
+            className="hero-fade measure mt-6 text-base leading-relaxed text-white/75 lg:text-lg"
+          >
             <RichText segments={t.subtitle} strongClassName="font-semibold text-white" />
           </p>
           <div className="hero-fade mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
@@ -291,44 +288,10 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
         </div>
       </div>
 
-      {/* Triple chevron, white with a graduated transparency fade rather than
-          the word "Scroll" + a line. The three strokes read as motion on
-          their own; a slow staggered pulse (skipped under reduced motion)
-          reinforces the downward direction without relying on text. */}
-      <svg
-        className="scroll-cue hero-fade absolute bottom-6 end-6 hidden h-8 w-5 sm:block lg:end-10"
-        viewBox="0 0 20 32"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          className="scroll-chevron"
-          d="M2 2l8 8 8-8"
-          stroke="white"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="1"
-        />
-        <path
-          className="scroll-chevron"
-          d="M2 12l8 8 8-8"
-          stroke="white"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.6"
-        />
-        <path
-          className="scroll-chevron"
-          d="M2 22l8 8 8-8"
-          stroke="white"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.3"
-        />
-      </svg>
+      {/* White here, near-black in every section below — this is the only
+          one sitting on the dark video. `hero-fade` lets it arrive with the
+          rest of the copy instead of being present from the first frame. */}
+      <ScrollCue tone="light" className="hero-fade" />
     </section>
   );
 }

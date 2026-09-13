@@ -1,4 +1,5 @@
 import type { RichSegment } from "@/lib/i18n/dictionary";
+import RotatingWord from "@/components/RotatingWord";
 
 /**
  * Renders a RichSegment[] — plain text, with `strong` segments as <strong>.
@@ -20,7 +21,14 @@ export default function RichText({
   return (
     <>
       {segments.map((s, i) =>
-        s.strong ? (
+        s.rotateThrough ? (
+          // Still a <strong>: the word is emphasised in the sentence whether
+          // or not it happens to be cycling, and it has to stay emphasised
+          // for the reader who has reduced motion on and never sees it move.
+          <strong key={i} className={strongClassName}>
+            <RotatingWord words={[s.text, ...s.rotateThrough]} />
+          </strong>
+        ) : s.strong ? (
           <strong key={i} className={strongClassName}>
             {s.text}
           </strong>

@@ -29,15 +29,31 @@ const ar: Dictionary = {
   },
 
   hero: {
-    eyebrowCity: "هامبورغ",
-    eyebrowRoute: "من أوروبا إلى الشرق الأوسط",
     headlineLine1: "أرسل أي شيء",
     headlineLine2: "من أوروبا",
     headlineLine3Lead: "إلى",
     destinationName: "لبنان",
     subtitle: [
       { text: "شحن حاويات مجمّعة وتجارة بين " },
-      { text: "أوروبا", strong: true },
+      {
+        text: "أوروبا",
+        strong: true,
+        // بين takes these directly. السويد والدنمارك والنمسا carry ال as
+        // part of the name itself — dropping it would read as a common noun,
+        // not a country — while the rest take none.
+        rotateThrough: [
+          "ألمانيا",
+          "فرنسا",
+          "هولندا",
+          "بلجيكا",
+          "إيطاليا",
+          "إسبانيا",
+          "السويد",
+          "الدنمارك",
+          "النمسا",
+          "بولندا",
+        ],
+      },
       { text: " و" },
       { text: "الشرق الأوسط", strong: true },
       { text: "." },
@@ -80,6 +96,7 @@ const ar: Dictionary = {
         body: "نتولّى الاستلام والشحن والتخليص الجمركي. طردك يصل إلى الباب.",
       },
     ],
+    scrubberLabel: "اسحب للرجوع إلى الخطوات",
   },
 
   calculatorPromo: {

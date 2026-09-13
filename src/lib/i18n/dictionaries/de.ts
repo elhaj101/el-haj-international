@@ -16,15 +16,33 @@ const de: Dictionary = {
   },
 
   hero: {
-    eyebrowCity: "Hamburg",
-    eyebrowRoute: "Europa in den Nahen Osten",
     headlineLine1: "Alles versenden",
     headlineLine2: "von Europa",
     headlineLine3Lead: "nach",
     destinationName: "Libanon",
     subtitle: [
       { text: "Konsolidierter Containerversand und Handel zwischen " },
-      { text: "Europa", strong: true },
+      {
+        text: "Europa",
+        strong: true,
+        // Dative — "zwischen" governs it, so these are the forms the
+        // sentence needs, not the dictionary forms. Only "die Niederlande"
+        // actually changes shape (plural, and it carries its article);
+        // the rest are neuter country names used bare, which look identical
+        // in the dative.
+        rotateThrough: [
+          "Deutschland",
+          "Frankreich",
+          "den Niederlanden",
+          "Belgien",
+          "Italien",
+          "Spanien",
+          "Schweden",
+          "Dänemark",
+          "Österreich",
+          "Polen",
+        ],
+      },
       { text: " und " },
       { text: "dem Nahen Osten", strong: true },
       { text: "." },
@@ -67,6 +85,7 @@ const de: Dictionary = {
         body: "Wir übernehmen Abholung, Versand und Zollabfertigung. Ihr Paket kommt an die Tür.",
       },
     ],
+    scrubberLabel: "Ziehen, um die Schritte erneut anzusehen",
   },
 
   calculatorPromo: {
