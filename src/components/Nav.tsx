@@ -211,7 +211,19 @@ function LanguageToggle({
                 key={l}
                 href={pathForLocale(l)}
                 hrefLang={l}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  // Switching locale here is a SOFT navigation: the inline
+                  // script that sets these on a fresh page load never runs
+                  // again, and SetHtmlLangDir's layout effect lives in a
+                  // parent layout — React runs child layout effects first,
+                  // so every GSAP effect in the page below would rebuild
+                  // itself before the document direction caught up. Setting
+                  // both here, in the event handler, means the switch is
+                  // already correct by the time React renders the new route.
+                  document.documentElement.lang = l;
+                  document.documentElement.dir = dirFor(l);
+                }}
                 className="block px-4 py-2 text-sm text-fg transition-colors duration-150 hover:bg-bg-alt"
               >
                 {LOCALE_NAMES[l]}

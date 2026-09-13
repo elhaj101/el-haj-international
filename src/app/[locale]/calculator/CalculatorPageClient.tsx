@@ -55,7 +55,7 @@ export default function CalculatorPageClient({ locale }: { locale: Locale }) {
                   key={d.id}
                   type="button"
                   onClick={() => setDestinationId(d.id)}
-                  className="group flex items-center gap-5 rounded-2xl border border-line p-6 text-left transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
+                  className="group flex items-center gap-5 rounded-2xl border border-line p-6 text-start transition-all duration-200 hover:border-fg/30 hover:shadow-lg"
                 >
                   <Flag
                     id={d.id}
@@ -180,7 +180,7 @@ function ProfileTab({
       role="tab"
       aria-selected={on}
       onClick={onClick}
-      className={`flex-1 rounded-xl border px-5 py-4 text-left transition-all duration-200 sm:flex-none sm:min-w-[16rem] ${
+      className={`flex-1 rounded-xl border px-5 py-4 text-start transition-all duration-200 sm:flex-none sm:min-w-[16rem] ${
         on
           ? "border-fg/30 bg-bg shadow-sm"
           : "border-line text-muted hover:border-fg/25"

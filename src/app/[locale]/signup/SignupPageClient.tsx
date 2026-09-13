@@ -243,7 +243,7 @@ export default function SignupPageClient({ locale }: { locale: Locale }) {
                       setKind(o.id);
                       setStep(1);
                     }}
-                    className="group rounded-2xl border border-line p-7 text-left transition-colors duration-200 hover:border-accent"
+                    className="group rounded-2xl border border-line p-7 text-start transition-colors duration-200 hover:border-accent"
                   >
                     <p className="eyebrow">{o.tag}</p>
                     <h2 className="display mt-3 text-2xl transition-colors duration-200 group-hover:text-accent">

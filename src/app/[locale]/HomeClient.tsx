@@ -33,9 +33,14 @@ export default function HomeClient({ locale }: { locale: Locale }) {
       <Nav dict={dict} locale={locale} />
       <main>
         <Hero dict={dict} locale={locale} />
-        <Statement dict={dict} />
-        <Marquee dict={dict} />
-        <HowItWorks dict={dict} />
+        {/* Every one of these runs a hand-written GSAP motion along the
+            horizontal axis, and GSAP's x/xPercent are physical pixels — they
+            do not mirror themselves the way the CSS layout around them does.
+            So each needs the locale, not just the dictionary, to know which
+            way "forward" points. See motionSignFor() in lib/i18n/locales.ts. */}
+        <Statement dict={dict} locale={locale} />
+        <Marquee dict={dict} locale={locale} />
+        <HowItWorks dict={dict} locale={locale} />
         <CalculatorPromo dict={dict} locale={locale} />
         <ClosingCTA dict={dict} locale={locale} />
       </main>

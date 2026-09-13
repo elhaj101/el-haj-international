@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ContainerMark } from "./Logo";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { motionSignFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * Three short marketing steps: use the calculator, send the order, wait for
@@ -30,13 +31,27 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
  * locales.ts's NUMBER_LOCALE comment on why Lebanese commercial numerals
  * stay Latin), not language-dependent content.
  */
-export default function HowItWorks({ dict }: { dict: Dictionary }) {
+export default function HowItWorks({
+  dict,
+  locale,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+}) {
   const STEPS = dict.howItWorks.steps;
+  const rtl = motionSignFor(locale) === -1;
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
       gsap.registerPlugin(ScrollTrigger);
+      // +1 left-to-right, -1 right-to-left. The flex track itself is already
+      // mirrored by the browser under `dir="rtl"` — measured at 1440px, the
+      // three panels sit at x = 691 / -58 / -806 instead of 0 / 749 / 1498,
+      // i.e. panels two and three are off-screen to the LEFT. Sliding the
+      // track the LTR way (x: -806) therefore pushed them further out of
+      // view and the section played as three blank screens.
+      const sign = motionSignFor(locale);
       // Under reduced motion the CSS in globals.css stacks the track, because
       // the horizontal layout is only readable *because* of the translate —
       // that transform is layout-critical, not decorative. So: no JS here.
@@ -69,6 +84,15 @@ export default function HowItWorks({ dict }: { dict: Dictionary }) {
       const TRAVEL = Math.max(1, STEPS.length - 1) * 1.0;
       const TOTAL = HOLD + TRAVEL + HOLD;
 
+      // The rail fills from whichever end the reader starts at. This is a
+      // transform-origin, so it can't be left to a logical CSS property —
+      // set here rather than via a class because GSAP writes
+      // `transform-origin` inline when it takes over an element's transform,
+      // and an inline style beats any class.
+      gsap.set(".rail-fill", {
+        transformOrigin: rtl ? "right center" : "left center",
+      });
+
       gsap
         .timeline({
           scrollTrigger: {
@@ -88,12 +112,18 @@ export default function HowItWorks({ dict }: { dict: Dictionary }) {
         // through it.
         .to(
           track,
-          { x: () => -travelDistance(), duration: TRAVEL, ease: "none" },
+          { x: () => -sign * travelDistance(), duration: TRAVEL, ease: "none" },
           HOLD,
         )
         .to(
           ".rail-marker",
-          { xPercent: 100 * (STEPS.length - 1), duration: TRAVEL, ease: "none" },
+          {
+            // Travels away from its own start edge, which `start-0` has
+            // already placed on the correct side of the rail.
+            xPercent: sign * 100 * (STEPS.length - 1),
+            duration: TRAVEL,
+            ease: "none",
+          },
           HOLD,
         )
         .to(
@@ -148,9 +178,15 @@ export default function HowItWorks({ dict }: { dict: Dictionary }) {
 
       <div className="rail-wrap absolute inset-x-0 bottom-12 mx-auto max-w-[1400px] px-6 lg:bottom-16 lg:px-10">
         <div className="relative h-px w-full bg-line">
-          <div className="rail-fill absolute inset-0 origin-left scale-x-0 bg-accent" />
+          {/* origin set from JS above too, for when GSAP inlines it; this
+              class is what holds under reduced motion, where no JS runs. */}
           <div
-            className="rail-marker absolute -top-3 left-0 text-accent"
+            className={`rail-fill absolute inset-0 scale-x-0 bg-accent ${
+              rtl ? "origin-right" : "origin-left"
+            }`}
+          />
+          <div
+            className="rail-marker absolute -top-3 start-0 text-accent"
             style={{ width: `${100 / STEPS.length}%` }}
           >
             <ContainerMark className="h-6 w-[33px]" />

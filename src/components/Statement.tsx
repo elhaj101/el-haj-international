@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { asset } from "@/lib/asset";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { motionSignFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * The signature moment: a container is craned across the viewport while the
@@ -23,12 +24,19 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
  * business moving stock — rather than leaning on one broad phrase to cover
  * both. Mirrors the personal/business split the calculator itself now makes.
  */
-export default function Statement({ dict }: { dict: Dictionary }) {
+export default function Statement({
+  dict,
+  locale,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+}) {
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
       gsap.registerPlugin(ScrollTrigger, SplitText);
+      const sign = motionSignFor(locale);
       const reduce = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
@@ -45,7 +53,9 @@ export default function Statement({ dict }: { dict: Dictionary }) {
       // to the section's own viewport window below.
       const idle = [
         gsap.to(".swing-idle", {
-          rotate: 2.2,
+          // Swings the same way the crane leans, so the sway and the travel
+          // don't pull against each other under RTL.
+          rotate: 2.2 * sign,
           duration: 3.4,
           ease: "sine.inOut",
           repeat: -1,
@@ -80,14 +90,18 @@ export default function Statement({ dict }: { dict: Dictionary }) {
             invalidateOnRefresh: true,
           },
         })
-        // Craned in from the lower left, across, and away to the upper right.
+        // Craned in low from the edge the reader starts at, across, and away
+        // high toward the edge they finish at — lower-left to upper-right in
+        // English and German, lower-right to upper-left in Arabic. Only the
+        // horizontal travel and the lean flip; the rise (yPercent) and the
+        // growth (scale) read identically either way.
         .fromTo(
           ".swing-travel",
-          { xPercent: -78, yPercent: 34, rotate: -9, scale: 0.86 },
+          { xPercent: -78 * sign, yPercent: 34, rotate: -9 * sign, scale: 0.86 },
           {
-            xPercent: 78,
+            xPercent: 78 * sign,
             yPercent: -26,
-            rotate: 7,
+            rotate: 7 * sign,
             scale: 1.04,
             ease: "none",
             duration: 1,

@@ -123,7 +123,7 @@ export default function CalculatorPromo({
               className="promo-item group mt-8 inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
             >
               {t.openCalculator}
-              <span className="transition-transform duration-200 group-hover:translate-x-1">
+              <span className="transition-transform duration-200 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
                 {arrow}
               </span>
             </Link>

@@ -127,7 +127,7 @@ export default function BusinessCalculator({
                 type="button"
                 onClick={() => setCategoryId(c.id)}
                 aria-pressed={on}
-                className={`relative overflow-hidden rounded-xl border p-5 ps-6 text-left transition-all duration-200 ${
+                className={`relative overflow-hidden rounded-xl border p-5 ps-6 text-start transition-all duration-200 ${
                   on
                     ? "border-fg/30 bg-bg-alt shadow-sm"
                     : "border-line hover:border-fg/25"

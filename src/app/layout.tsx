@@ -67,8 +67,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // `lang`/`dir` are rewritten during HTML parsing by the inline script in
+    // SetHtmlLangDir, before React ever sees this element — so the `lang="en"`
+    // below is a build-time placeholder that is already stale by hydration.
+    // suppressHydrationWarning tells React to keep the DOM's value instead of
+    // treating the difference as a hydration error (which it recovers from by
+    // client-rendering the boundary, undoing the correction).
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${displayLatin.variable} ${bodyLatin.variable} ${arabic.variable} antialiased`}
     >
       <body>

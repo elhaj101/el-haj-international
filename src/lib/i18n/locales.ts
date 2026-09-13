@@ -29,19 +29,40 @@ export function dirFor(locale: Locale): "rtl" | "ltr" {
 /**
  * Directional arrow glyph. Every "→" in the English copy that indicates
  * forward motion through a flow (start an estimate, open WhatsApp, continue
- * a step) should flip to "←" in Arabic, since forward is visually leftward
- * in RTL. This does NOT touch the GSAP scroll-jacking animations (Hero's
- * flag, Statement's crane sweep, HowItWorks' horizontal gallery) — those
- * keep their existing left-to-right motion signs for every locale in this
- * pass. Mirroring a hand-tuned scroll-jacked animation system correctly is
- * a separate, substantial piece of work, and shipping it un-verified would
- * risk quietly breaking the exact GSAP timing this codebase has twice now
- * had to debug carefully (see the comments in Hero.tsx and HowItWorks.tsx).
- * Text direction and every arrow glyph are correct for Arabic in this pass;
- * the scroll-jacked motion direction is a known, deliberate follow-up.
+ * a step) flips to "←" in Arabic, since forward is visually leftward in RTL.
  */
 export function arrowFor(locale: Locale): "→" | "←" {
   return dirFor(locale) === "rtl" ? "←" : "→";
+}
+
+/**
+ * Sign multiplier for hand-written motion along the inline axis: +1 where
+ * "forward" means rightward (LTR), -1 where it means leftward (RTL).
+ *
+ * CSS solves this for layout — logical properties (`ps-`, `me-`, `start-0`,
+ * `text-start`) and Tailwind's `rtl:` variant both mirror themselves off the
+ * document's direction. GSAP does not. It writes `transform: translate(...)`
+ * in raw pixels or percentages, and those axes are physical: `x: -800` moves
+ * an element 800px toward the left of the *screen* no matter which way the
+ * document reads. So every scroll-jacked motion on this site — HowItWorks'
+ * horizontal step gallery, Statement's craned container, the Marquee strip,
+ * the hero flag's unfurl origin — had a left-to-right direction baked into
+ * its numbers, and under RTL each one ran backwards: the gallery drove its
+ * panels further off-screen instead of revealing them, and the marquee slid
+ * away from its own content leaving a blank strip.
+ *
+ * Multiplying the inline-axis values (x, xPercent, and the rotations that
+ * read as "leaning into the direction of travel") by this keeps one set of
+ * hand-tuned magnitudes and flips only their direction — rather than
+ * duplicating each timeline per direction, which would be two things to keep
+ * in step every time the motion is retuned.
+ *
+ * Cross-axis values (y, yPercent, scale, opacity) are NOT multiplied: RTL
+ * mirrors the horizontal axis only, and negating vertical motion would have
+ * the container craned in from the wrong height.
+ */
+export function motionSignFor(locale: Locale): 1 | -1 {
+  return dirFor(locale) === "rtl" ? -1 : 1;
 }
 
 /** The reverse of arrowFor — for a "Back" control, which points the

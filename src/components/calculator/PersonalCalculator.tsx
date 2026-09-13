@@ -146,7 +146,7 @@ export default function PersonalCalculator({
                           type="button"
                           onClick={() => setBoxId(b.id)}
                           aria-pressed={on}
-                          className={`rounded-xl border p-3 text-left transition-colors sm:p-4 ${
+                          className={`rounded-xl border p-3 text-start transition-colors sm:p-4 ${
                             on
                               ? "border-fg/30 bg-bg-alt shadow-sm"
                               : "border-line hover:border-fg/25"
@@ -265,7 +265,7 @@ export default function PersonalCalculator({
                       type="button"
                       onClick={() => setCategoryId(c.id)}
                       aria-pressed={on}
-                      className={`relative overflow-hidden rounded-xl border py-3 ps-4 pe-2.5 text-left transition-all duration-200 sm:ps-5 sm:pe-3 ${
+                      className={`relative overflow-hidden rounded-xl border py-3 ps-4 pe-2.5 text-start transition-all duration-200 sm:ps-5 sm:pe-3 ${
                         on
                           ? "border-fg/30 bg-bg-alt shadow-sm"
                           : "border-line hover:border-fg/25"

@@ -136,7 +136,7 @@ export default function ClosingCTA({ dict, locale }: { dict: Dictionary; locale:
                 className="group inline-flex items-center justify-between gap-6 rounded-full bg-accent px-7 py-4 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
               >
                 {t.personalParcelsLabel}
-                <span className="transition-transform duration-200 group-hover:translate-x-1">
+                <span className="transition-transform duration-200 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
                   {arrow}
                 </span>
               </a>
@@ -147,7 +147,7 @@ export default function ClosingCTA({ dict, locale }: { dict: Dictionary; locale:
                 className="group inline-flex items-center justify-between gap-6 rounded-full border border-fg/20 px-7 py-4 text-sm font-semibold transition-colors duration-200 hover:border-accent hover:text-accent"
               >
                 {t.businessInquiryLabel}
-                <span className="transition-transform duration-200 group-hover:translate-x-1">
+                <span className="transition-transform duration-200 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
                   {arrow}
                 </span>
               </a>

@@ -10,7 +10,7 @@ import { asset } from "@/lib/asset";
 import Flag from "@/components/Flag";
 import RichText from "@/components/RichText";
 import type { Dictionary } from "@/lib/i18n/dictionary";
-import { arrowFor, type Locale } from "@/lib/i18n/locales";
+import { arrowFor, motionSignFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * Full-bleed video hero — the ship fills the viewport at every size, phone
@@ -23,6 +23,13 @@ import { arrowFor, type Locale } from "@/lib/i18n/locales";
 export default function Hero({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const t = dict.hero;
   const arrow = arrowFor(locale);
+  const rtl = motionSignFor(locale) === -1;
+  // Which edge of the flag is its "mast" — the edge touching the word it
+  // follows. The headline's third line is a flex row, so the browser already
+  // mirrors it under RTL and the flag lands to the LEFT of لبنان rather than
+  // the right of "Lebanon". Unfurling from the far edge would have it peel
+  // away from the word instead of out of it.
+  const flagOrigin = rtl ? "right center" : "left center";
   const root = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -108,8 +115,8 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
               {
                 scaleX: 0,
                 opacity: 0,
-                rotate: -8,
-                transformOrigin: "left center",
+                rotate: -8 * motionSignFor(locale),
+                transformOrigin: flagOrigin,
                 duration: 0.7,
                 ease: "back.out(1.6)",
               },
@@ -128,15 +135,21 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
             // animated away from it. Both tweens then wrote
             // rotate/transformOrigin on the same element every frame and
             // fought over the resting angle.
+            //
+            // Both the angle and the shear are mirrored under RTL along with
+            // the origin: with the mast on the right, an unmirrored positive
+            // rotation drops the flag's free end instead of lifting it, so
+            // the cloth would ripple the opposite way to the LTR version
+            // rather than being its mirror image.
             .call(() => {
               gsap.to(".hero-flag", {
-                rotate: 2.5,
-                skewY: 2,
+                rotate: 2.5 * motionSignFor(locale),
+                skewY: 2 * motionSignFor(locale),
                 duration: 1.8,
                 repeat: -1,
                 yoyo: true,
                 ease: "sine.inOut",
-                transformOrigin: "left center",
+                transformOrigin: flagOrigin,
               });
             });
 
@@ -248,7 +261,7 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
                 <Flag
                   id="LB"
                   name={t.destinationName}
-                  className="hero-flag w-[0.85em] origin-left"
+                  className={`hero-flag w-[0.85em] ${rtl ? "origin-right" : "origin-left"}`}
                 />
               </span>
             </span>
@@ -264,7 +277,7 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.03]"
             >
               {t.chatWithUs}
-              <span className="transition-transform duration-200 group-hover:translate-x-1">
+              <span className="transition-transform duration-200 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
                 {arrow}
               </span>
             </a>
@@ -283,7 +296,7 @@ export default function Hero({ dict, locale }: { dict: Dictionary; locale: Local
           their own; a slow staggered pulse (skipped under reduced motion)
           reinforces the downward direction without relying on text. */}
       <svg
-        className="scroll-cue hero-fade absolute bottom-6 right-6 hidden h-8 w-5 sm:block lg:right-10"
+        className="scroll-cue hero-fade absolute bottom-6 end-6 hidden h-8 w-5 sm:block lg:end-10"
         viewBox="0 0 20 32"
         fill="none"
         aria-hidden="true"

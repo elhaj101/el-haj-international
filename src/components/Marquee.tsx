@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { motionSignFor, type Locale } from "@/lib/i18n/locales";
 
 /**
  * A continuously moving strip. Two jobs: it breaks up a page that would
@@ -14,7 +15,13 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
  * Scroll velocity nudges its speed, so it feels connected to the page rather
  * than bolted on.
  */
-export default function Marquee({ dict }: { dict: Dictionary }) {
+export default function Marquee({
+  dict,
+  locale,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+}) {
   const WORDS = dict.marquee.words;
   const root = useRef<HTMLDivElement>(null);
 
@@ -25,8 +32,16 @@ export default function Marquee({ dict }: { dict: Dictionary }) {
 
       // The content is rendered twice, so travelling exactly one copy's width
       // loops seamlessly.
+      //
+      // Which way it travels is not a style choice — it's the only direction
+      // that keeps the strip full. `w-max` inside the overflow-hidden frame
+      // anchors the content at the frame's start edge, so under RTL it hangs
+      // off to the LEFT (measured at 1440px: the inner spans -3353 to 1440
+      // rather than 0 to 4106). Moving it further left, as the LTR sign does,
+      // walks it away from the visible frame and leaves a widening blank gap
+      // at the right — so the sign has to follow the anchor.
       const tween = gsap.to(".marquee-inner", {
-        xPercent: -50,
+        xPercent: -50 * motionSignFor(locale),
         repeat: -1,
         duration: 24,
         ease: "none",
