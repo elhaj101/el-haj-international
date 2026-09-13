@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
 import { WordmarkSwap } from "./Logo";
 import type { Dictionary } from "@/lib/i18n/dictionary";
-import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n/locales";
+import { LOCALES, LOCALE_NAMES, dirFor, type Locale } from "@/lib/i18n/locales";
 
 export default function Nav({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const [solid, setSolid] = useState(false);
@@ -122,12 +122,14 @@ export default function Nav({ dict, locale }: { dict: Dictionary; locale: Locale
   );
 }
 
+/** Short button label per locale — the dropdown itself spells each language
+    out in full (via LOCALE_NAMES), so the closed button only needs enough
+    to identify the current one at a glance. */
+const LOCALE_CODES: Record<Locale, string> = { en: "EN", ar: "AR", de: "DE" };
+
 /**
- * Three plain text links rather than a dropdown — there are only three
- * locales, and a dropdown would need its own open/close state, a click-away
- * handler, and keyboard handling to be done properly. Three links need none
- * of that, and the current locale is legible as the non-link one, without
- * needing a separate "active" style to convey it.
+ * One button, not three standing links — a dropdown menu that opens on
+ * click and closes on an outside click, Escape, or picking a language.
  */
 function LanguageToggle({
   locale,
@@ -140,33 +142,108 @@ function LanguageToggle({
   solid: boolean;
   label: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  // The menu hangs from whichever edge is this button's own "start" —
+  // the near edge in a left-to-right nav, the far one once the whole bar
+  // mirrors under RTL — so it never spills toward the middle of the header.
+  const menuSide = dirFor(locale) === "rtl" ? "end-0" : "start-0";
+
   return (
-    <div
-      role="group"
-      aria-label={label}
-      className={`flex items-center gap-1 text-sm ${solid ? "text-muted" : "text-white/80"}`}
-    >
-      {LOCALES.map((l, i) => (
-        <span key={l} className="flex items-center gap-1">
-          {i > 0 && <span aria-hidden className="opacity-40">·</span>}
-          {l === locale ? (
-            <span
-              aria-current="true"
-              className={solid ? "font-semibold text-fg" : "font-semibold text-white"}
-            >
-              {LOCALE_NAMES[l]}
-            </span>
-          ) : (
-            <Link
-              href={pathForLocale(l)}
-              className="transition-opacity duration-200 hover:opacity-60"
-              hrefLang={l}
-            >
-              {LOCALE_NAMES[l]}
-            </Link>
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={label}
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+          solid
+            ? "border-fg/15 text-muted hover:border-fg/30 hover:text-fg"
+            : "border-white/40 text-white/80 hover:border-white hover:text-white"
+        }`}
+      >
+        <GlobeIcon className="h-4 w-4" />
+        {LOCALE_CODES[locale]}
+        <ChevronIcon className={`h-3 w-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div
+          aria-label={label}
+          className={`absolute top-full ${menuSide} z-10 mt-2 min-w-[9rem] overflow-hidden rounded-2xl border border-line bg-bg py-1.5 text-fg shadow-lg`}
+        >
+          {/* Plain links, not an ARIA `menu`/`menuitem` widget — that role
+              implies arrow-key navigation between items, Home/End, and a
+              roving tabindex, none of which this implements. Tab already
+              moves through these in order and Enter/Space activates them,
+              which is real, correct keyboard support; claiming the `menu`
+              role without the behaviour it promises would be worse than not
+              claiming it. */}
+          {LOCALES.map((l) =>
+            l === locale ? (
+              <span
+                key={l}
+                aria-current="true"
+                className="block px-4 py-2 text-sm font-semibold text-accent"
+              >
+                {LOCALE_NAMES[l]}
+              </span>
+            ) : (
+              <Link
+                key={l}
+                href={pathForLocale(l)}
+                hrefLang={l}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-sm text-fg transition-colors duration-150 hover:bg-bg-alt"
+              >
+                {LOCALE_NAMES[l]}
+              </Link>
+            ),
           )}
-        </span>
-      ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function GlobeIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.4" />
+      <ellipse cx="10" cy="10" rx="3.3" ry="7.5" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.7 10h14.6M3.6 6h12.8M3.6 14h12.8" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 8" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M1.5 1.5l4.5 4.5 4.5-4.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
