@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import Statement from "@/components/Statement";
 import Marquee from "@/components/Marquee";
 import HowItWorks from "@/components/HowItWorks";
-import WhatWeMove from "@/components/WhatWeMove";
+import CalculatorPromo from "@/components/CalculatorPromo";
 import ClosingCTA from "@/components/ClosingCTA";
 import Footer from "@/components/Footer";
 
@@ -18,7 +18,7 @@ export default function Home() {
         <Statement />
         <Marquee />
         <HowItWorks />
-        <WhatWeMove />
+        <CalculatorPromo />
         <ClosingCTA />
       </main>
       <Footer />

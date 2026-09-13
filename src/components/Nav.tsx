@@ -7,7 +7,7 @@ import { WordmarkSwap } from "./Logo";
 
 const LINKS = [
   { label: "How it works", href: "#how" },
-  { label: "What we move", href: "#cargo" },
+  { label: "Pricing", href: "#pricing" },
   { label: "Calculator", href: "/calculator" },
 ];
 
