@@ -8,6 +8,10 @@ import type { Dictionary } from "../dictionary";
  */
 const boxWord = (n: number) => (n >= 3 && n <= 10 ? "كراتين" : "كرتونة");
 
+/** Same Arabic number-noun agreement rule as boxWord, for the "what are you
+    sending" multi-select list (up to 15 items). */
+const itemWord = (n: number) => (n >= 3 && n <= 10 ? "عناصر" : "عنصر");
+
 const ar: Dictionary = {
   meta: {
     // The company name stays in Latin script, as it is on the logo. "El Haj"
@@ -246,16 +250,23 @@ const ar: Dictionary = {
   },
 
   pricingSentences: {
-    personalDutyFree: ({ categoryLabel, securityFeePct, deemedUsdPerKg, weightKg }) =>
-      `${categoryLabel} معفاة من الرسوم الجمركية — يُفرض رسم الأمان فقط بنسبة ${securityFeePct}، على قيمة مفترضة قدرها ${deemedUsdPerKg} دولار أمريكي للكيلوغرام، لنحو ${weightKg} كغ.`,
+    personalDutyFree: ({ categoryLabel, securityFeePct, deemedEurPerKg, weightKg }) =>
+      `${categoryLabel} معفاة من الرسوم الجمركية — يُفرض رسم الأمان فقط بنسبة ${securityFeePct}، على قيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام، لنحو ${weightKg} كغ.`,
     personalDutyCharged: ({
       weightKg,
-      deemedUsdPerKg,
+      deemedEurPerKg,
       dutyPct,
       categoryLabel,
       securityFeePct,
     }) =>
-      `نحو ${weightKg} كغ بقيمة مفترضة قدرها ${deemedUsdPerKg} دولار أمريكي للكيلوغرام، برسم جمركي ${dutyPct} على ${categoryLabel}، إضافةً إلى رسم أمان ${securityFeePct}.`,
+      `نحو ${weightKg} كغ بقيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام، برسم جمركي ${dutyPct} على ${categoryLabel}، إضافةً إلى رسم أمان ${securityFeePct}.`,
+    personalDutyUnspecified: ({
+      securityFeePct,
+      deemedEurPerKg,
+      weightKg,
+      unspecifiedDutyPct,
+    }) =>
+      `لم تحدّد بعد محتوى الشحنة، لذا يُستخدم معدّل افتراضي قدره ${unspecifiedDutyPct} على قيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام لنحو ${weightKg} كغ، إضافةً إلى رسم أمان ${securityFeePct}. اختر ما تُرسله أعلاه للحصول على تقدير أدق.`,
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `كرتونة واحدة مقاس ${boxLabel} بسعر ثابت ${priceEur}. السعر نفسه مهما كان الوزن.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -275,8 +286,8 @@ const ar: Dictionary = {
       } نحو ${weightKg} كغ — أي ${altEur} بسعر ${perKgEur} للكيلوغرام.`,
     personalAlternativeFromWeight: ({ boxesNeeded, boxLabel, altEur }) =>
       `هذا الوزن يملأ عادةً نحو ${boxesNeeded} ${boxWord(boxesNeeded)} مقاس ${boxLabel} — أي ${altEur} بسعر الكرتونة الثابت.`,
-    businessDutyByWeight: ({ deemedUsdPerKg, chargeableKg, dutyPct, securityFeePct }) =>
-      `يُحتسب على أساس قيمة مفترضة قدرها ${deemedUsdPerKg} دولار أمريكي للكيلوغرام (${chargeableKg} كغ)، برسم جمركي ${dutyPct} إضافةً إلى رسم أمان ${securityFeePct}. القيمة الفعلية للبضاعة لا تغيّر هذا الرقم.`,
+    businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
+      `يُحتسب على أساس قيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام (${chargeableKg} كغ)، برسم جمركي ${dutyPct} إضافةً إلى رسم أمان ${securityFeePct}. القيمة الفعلية للبضاعة لا تغيّر هذا الرقم.`,
     businessDutyByValue: ({
       valueEur,
       dutyPct,
@@ -307,9 +318,14 @@ const ar: Dictionary = {
     kgUnit: (n) => `${n} كغ`,
     chargedOnActualWeight: (perKg) =>
       `يُحتسب على الوزن الفعلي بسعر ثابت ${perKg} للكيلوغرام، بصرف النظر عن الكراتين.`,
-    whatsInIt: "ما محتوى الشحنة؟",
+    whatsInIt: "ما الذي تُرسله؟",
     whatsInItBody:
-      "هذا لا يغيّر سعر الشحن، بل يحدّد النسبة التي قد يفرضها الجمرك اللبناني عند الوصول — وهي النسبة الظاهرة على كل بطاقة.",
+      "هذا لا يغيّر سعر الشحن، بل يحدّد النسبة التي قد يفرضها الجمرك اللبناني عند الوصول. اختر كل ما ينطبق — وإن تركته فارغًا، سنفترض معدّلًا افتراضيًا عامًا.",
+    chooseWhatsInside: "اختر محتويات الشحنة",
+    itemsChosenEdit: (n) => `${n} ${itemWord(n)} مختار — تعديل`,
+    doneChoosing: "تم",
+    removeItem: (label) => `إزالة ${label}`,
+    contentsNotSpecified: "المحتوى غير محدد",
     summaryOneBox: (boxLabel) => `كرتونة واحدة مقاس ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} ${boxWord(n)} مقاس ${boxLabel}`,
     summaryWeight: (kg) => `${kg} كغ`,

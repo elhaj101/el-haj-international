@@ -228,16 +228,23 @@ const en: Dictionary = {
   },
 
   pricingSentences: {
-    personalDutyFree: ({ categoryLabel, securityFeePct, deemedUsdPerKg, weightKg }) =>
-      `${categoryLabel} come in duty free — this is the ${securityFeePct} security fee only, on a deemed value of USD ${deemedUsdPerKg}/kg for ~${weightKg} kg.`,
+    personalDutyFree: ({ categoryLabel, securityFeePct, deemedEurPerKg, weightKg }) =>
+      `${categoryLabel} come in duty free — this is the ${securityFeePct} security fee only, on a deemed value of ${deemedEurPerKg} EUR/kg for ~${weightKg} kg.`,
     personalDutyCharged: ({
       weightKg,
-      deemedUsdPerKg,
+      deemedEurPerKg,
       dutyPct,
       categoryLabel,
       securityFeePct,
     }) =>
-      `~${weightKg} kg at a deemed value of USD ${deemedUsdPerKg}/kg, charged at ${dutyPct} for ${categoryLabel.toLowerCase()} plus a ${securityFeePct} security fee.`,
+      `~${weightKg} kg at a deemed value of ${deemedEurPerKg} EUR/kg, charged at ${dutyPct} for ${categoryLabel.toLowerCase()} plus a ${securityFeePct} security fee.`,
+    personalDutyUnspecified: ({
+      securityFeePct,
+      deemedEurPerKg,
+      weightKg,
+      unspecifiedDutyPct,
+    }) =>
+      `You haven't told us what's inside yet, so this uses a standard placeholder rate of ${unspecifiedDutyPct} on a deemed value of ${deemedEurPerKg} EUR/kg for ~${weightKg} kg, plus the ${securityFeePct} security fee. Pick what you're sending above for a closer estimate.`,
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `One ${boxLabel} box at a flat ${priceEur}. The price is the same whatever it weighs.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -259,8 +266,8 @@ const en: Dictionary = {
       `That weight normally fills about ${boxesNeeded} ${boxLabel} box${
         boxesNeeded === 1 ? "" : "es"
       } — ${altEur} at the flat box price.`,
-    businessDutyByWeight: ({ deemedUsdPerKg, chargeableKg, dutyPct, securityFeePct }) =>
-      `Assessed on a deemed value of USD ${deemedUsdPerKg}/kg (${chargeableKg} kg), at ${dutyPct} duty + ${securityFeePct} security fee. What the goods are actually worth does not change this figure.`,
+    businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
+      `Assessed on a deemed value of ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), at ${dutyPct} duty + ${securityFeePct} security fee. What the goods are actually worth does not change this figure.`,
     businessDutyByValue: ({
       valueEur,
       dutyPct,
@@ -292,9 +299,14 @@ const en: Dictionary = {
     kgUnit: (n) => `${n} kg`,
     chargedOnActualWeight: (perKg) =>
       `Charged on actual weight at a flat ${perKg} per kilo, whatever the boxes are.`,
-    whatsInIt: "What is in it?",
+    whatsInIt: "What are you sending?",
     whatsInItBody:
-      "This does not change the shipping price. It sets the rate Lebanese customs may charge on arrival — the percentage on each card.",
+      "This does not change the shipping price. It sets the rate Lebanese customs may charge on arrival. Pick as many as apply — leave it blank and we'll assume a standard placeholder rate.",
+    chooseWhatsInside: "Choose what's inside",
+    itemsChosenEdit: (n) => `${n} item${n === 1 ? "" : "s"} chosen — edit`,
+    doneChoosing: "Done",
+    removeItem: (label) => `Remove ${label}`,
+    contentsNotSpecified: "contents not specified",
     summaryOneBox: (boxLabel) => `1 × ${boxLabel} box`,
     summaryManyBoxes: (n, boxLabel) => `${n} × ${boxLabel} boxes`,
     summaryWeight: (kg) => `${kg} kg`,

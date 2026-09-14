@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import RichText from "@/components/RichText";
+import SliderWithNumber from "./SliderWithNumber";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
 import {
@@ -11,6 +12,7 @@ import {
   COST_COLORS,
   CUSTOMS_DATA_AS_OF,
   LEBANON_VAT_RATE,
+  LOWEST_DUTY_CATEGORY,
   MIN_CHARGEABLE_KG,
   SECURITY_FEE_RATE,
   bandFor,
@@ -40,9 +42,14 @@ export default function BusinessCalculator({
 }) {
   const t = dict.businessCalculator;
   const arrow = arrowFor(locale);
-  const [categoryId, setCategoryId] = useState<string>("used-household");
-  const [weight, setWeight] = useState(60);
-  const [value, setValue] = useState(500);
+  // Defaults are deliberately the cheapest possible shipment — lowest-duty
+  // category, minimum weight, minimum declared value — so the first figure
+  // shown is the floor. See LOWEST_DUTY_CATEGORY in pricing.ts; note it's
+  // 0% *customs duty* specifically — VAT and the security fee still apply
+  // on a value-basis category, so this isn't a €0 default.
+  const [categoryId, setCategoryId] = useState<string>(LOWEST_DUTY_CATEGORY.id);
+  const [weight, setWeight] = useState(5);
+  const [value, setValue] = useState(50);
 
   const category = getCategory(categoryId);
   const categoryStrings = dict.cargoCategories[category.id];
@@ -171,7 +178,7 @@ export default function BusinessCalculator({
                 duty as well when the category is weight-based. */}
             <div>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <label htmlFor="weight" className="text-sm font-semibold">
+                <label id="weight-label" htmlFor="weight" className="text-sm font-semibold">
                   {t.weight}
                   <span className="ms-2 font-normal tabular-nums text-muted">
                     {t.kgUnit(weight)}
@@ -183,15 +190,14 @@ export default function BusinessCalculator({
                   freightLabel={t.freight}
                 />
               </div>
-              <input
+              <SliderWithNumber
                 id="weight"
-                type="range"
+                labelId="weight-label"
                 min={5}
                 max={1000}
                 step={5}
                 value={weight}
-                onChange={(e) => setWeight(Number(e.target.value))}
-                className="mt-4 w-full accent-[var(--accent)]"
+                onChange={setWeight}
               />
               <div className="mt-2 flex justify-between text-xs text-muted">
                 <span>{t.kgUnit(5)}</span>
@@ -209,7 +215,7 @@ export default function BusinessCalculator({
                 wondering where it went; greying it out says why. */}
             <div className={byValue ? "" : "opacity-55"}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <label htmlFor="value" className="text-sm font-semibold">
+                <label id="value-label" htmlFor="value" className="text-sm font-semibold">
                   {t.declaredValue}
                   <span className="ms-2 font-normal tabular-nums text-muted">
                     {byValue ? eur(value, locale) : "—"}
@@ -223,17 +229,16 @@ export default function BusinessCalculator({
                   </span>
                 )}
               </div>
-              <input
+              <SliderWithNumber
                 id="value"
-                type="range"
+                labelId="value-label"
+                describedById={byValue ? undefined : "value-disabled"}
                 min={50}
                 max={10000}
                 step={50}
                 value={value}
+                onChange={setValue}
                 disabled={!byValue}
-                aria-describedby={byValue ? undefined : "value-disabled"}
-                onChange={(e) => setValue(Number(e.target.value))}
-                className="mt-4 w-full accent-[var(--accent)] disabled:cursor-not-allowed"
               />
               {byValue ? (
                 <p className="mt-3 text-xs text-muted">

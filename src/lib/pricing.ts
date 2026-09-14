@@ -45,9 +45,23 @@ export const CUSTOMS_DATA_AS_OF = "April 2022 (FIDI) / August 2026 (customs.gov.
  * customs applies a deemed valuation per kilo, so weight is the tax
  * base and what the goods are actually worth is largely irrelevant.
  * This is the single most important number in the whole model.
+ * Quoted directly in EUR, not converted from USD — Ali confirmed
+ * 2026-09-14 that Lebanese customs prices uninvoiced goods at a flat
+ * 3 EUR/kg, correcting the earlier (wrong) USD-denominated assumption.
  * Source: FIDI Lebanon guide, April 2022.
  */
-export const DEEMED_VALUATION_USD_PER_KG = 3.0;
+export const DEEMED_VALUATION_EUR_PER_KG = 3.0;
+
+/**
+ * Rate assumed for a personal parcel whose contents haven't been told to
+ * us — the multi-select "what's in it" list can be left empty. Lebanese
+ * customs will still assess *something* on arrival, so this is a modest
+ * placeholder (the same duty band as low-rate items like phones or
+ * apparel) rather than either 0% or the highest band, applied on top of
+ * the same deemed valuation as every named category. Ali set this rate
+ * 2026-09-14.
+ */
+export const UNSPECIFIED_CONTENTS_DUTY_RATE = 0.05;
 
 /**
  * Duty + taxes on used household / removal goods, plus the separate 3%
@@ -68,10 +82,6 @@ export const COMMERCIAL_DUTY_RATE = 0.465;
 
 /** Lebanon's standard VAT rate, charged on CIF value (not stacked on duty). */
 export const LEBANON_VAT_RATE = 0.11;
-
-
-/** USD → EUR. Freight is priced in EUR; Lebanese duty is assessed in USD. */
-export const USD_TO_EUR = 0.92;
 
 /* -------------------------------------------------------------------
    (B) OUR COMMERCIAL RATES  —  ⚠️ ALL PLACEHOLDERS ⚠️
@@ -164,6 +174,16 @@ export const boxDims = (b: BoxSize) => `${b.w} × ${b.d} × ${b.h} cm`;
 export const getBoxSize = (id: string) =>
   BOX_SIZES.find((b) => b.id === id) ?? BOX_SIZES[1];
 
+/**
+ * Cheapest box — computed, not hand-picked, so it can't drift from
+ * BOX_SIZES if a price changes. Both calculators default to this rather
+ * than a "typical" size, so the first number a visitor sees is the floor,
+ * not a guess at their actual shipment.
+ */
+export const SMALLEST_BOX_SIZE = BOX_SIZES.reduce((min, b) =>
+  b.priceEur < min.priceEur ? b : min,
+);
+
 /** PLACEHOLDER — flat per-kilo price, the alternative to a box price. */
 export const PERSONAL_PER_KG_EUR = 2.5;
 
@@ -230,8 +250,14 @@ export interface PersonalQuote {
  * exactly why this path needs no declared-value input. The category only
  * supplies the rate; the weight supplies the base.
  *
+ * `categoryId` undefined means the sender hasn't told us what's inside
+ * (the "what are you sending" list lets that be left empty) — that is
+ * NOT the same as picking a named category, so it does not fall back to
+ * one. It gets its own rate and its own sentence instead, both honest
+ * about being a placeholder rather than an item-specific figure.
+ *
  * Extrapolation to flag: the deemed-valuation method is documented for
- * used household goods (see DEEMED_VALUATION_USD_PER_KG). Applying it to
+ * used household goods (see DEEMED_VALUATION_EUR_PER_KG). Applying it to
  * the other categories' rates is our own simplification for a
  * consumer-facing estimate, not something the FIDI guide states. The UI
  * says so. VAT is deliberately not stacked on here — the deemed-value
@@ -243,23 +269,39 @@ function personalDuty(
   dict: Dictionary,
   locale: Locale,
 ) {
-  const category = getCategory(categoryId ?? "used-household");
-  const categoryLabel = dict.cargoCategories[category.id]?.label ?? category.id;
-  const deemedEur = weightKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
-  const dutyEur = round(deemedEur * (category.duty + SECURITY_FEE_RATE));
   const t = dict.pricingSentences;
+  const deemedEur = weightKg * DEEMED_VALUATION_EUR_PER_KG;
+
+  if (categoryId === undefined) {
+    const dutyEur = round(
+      deemedEur * (UNSPECIFIED_CONTENTS_DUTY_RATE + SECURITY_FEE_RATE),
+    );
+    return {
+      dutyEur,
+      dutyBasis: t.personalDutyUnspecified({
+        securityFeePct: pct(SECURITY_FEE_RATE, locale),
+        deemedEurPerKg: num(DEEMED_VALUATION_EUR_PER_KG, 2, locale),
+        weightKg,
+        unspecifiedDutyPct: pct(UNSPECIFIED_CONTENTS_DUTY_RATE, locale),
+      }),
+    };
+  }
+
+  const category = getCategory(categoryId);
+  const categoryLabel = dict.cargoCategories[category.id]?.label ?? category.id;
+  const dutyEur = round(deemedEur * (category.duty + SECURITY_FEE_RATE));
 
   const dutyBasis =
     category.duty === 0
       ? t.personalDutyFree({
           categoryLabel,
           securityFeePct: pct(SECURITY_FEE_RATE, locale),
-          deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+          deemedEurPerKg: num(DEEMED_VALUATION_EUR_PER_KG, 2, locale),
           weightKg,
         })
       : t.personalDutyCharged({
           weightKg,
-          deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+          deemedEurPerKg: num(DEEMED_VALUATION_EUR_PER_KG, 2, locale),
           dutyPct: pct(category.duty, locale),
           categoryLabel,
           securityFeePct: pct(SECURITY_FEE_RATE, locale),
@@ -457,6 +499,19 @@ export const getCategory = (id: string) =>
   CARGO_CATEGORIES.find((c) => c.id === id) ?? CARGO_CATEGORIES[0];
 
 /**
+ * Lowest duty rate in the table — computed, not hand-picked, for the same
+ * reason as SMALLEST_BOX_SIZE. Both calculators default to this category
+ * rather than an arbitrary one, so the first duty figure shown is the
+ * floor. Note this is 0% *customs duty* specifically — a value-basis
+ * category still carries VAT + the security fee on top (see
+ * calculateQuote()), so "0% duty" is not the same as "free" on the
+ * business side.
+ */
+export const LOWEST_DUTY_CATEGORY = CARGO_CATEGORIES.reduce((min, c) =>
+  c.duty < min.duty ? c : min,
+);
+
+/**
  * Ordinal ramp for the duty bands, light -> dark as the rate climbs. One hue,
  * monotone lightness; validated against the calculator surface (#f2efea).
  */
@@ -517,11 +572,10 @@ export function calculateQuote(
 
   if (category.basis === "weight") {
     // Weight is the tax base, not declared value.
-    const deemedEur =
-      chargeableKg * DEEMED_VALUATION_USD_PER_KG * USD_TO_EUR;
+    const deemedEur = chargeableKg * DEEMED_VALUATION_EUR_PER_KG;
     dutyEur = deemedEur * (category.duty + SECURITY_FEE_RATE);
     dutyBasis = t.businessDutyByWeight({
-      deemedUsdPerKg: num(DEEMED_VALUATION_USD_PER_KG, 2, locale),
+      deemedEurPerKg: num(DEEMED_VALUATION_EUR_PER_KG, 2, locale),
       chargeableKg,
       dutyPct: pct(category.duty, locale),
       securityFeePct: pct(SECURITY_FEE_RATE, locale),

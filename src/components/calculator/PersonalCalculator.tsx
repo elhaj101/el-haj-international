@@ -5,23 +5,23 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
 import {
-  BAND_COLORS,
   BOX_SIZES,
   CARGO_CATEGORIES,
   CUSTOMS_DATA_AS_OF,
+  LOWEST_DUTY_CATEGORY,
   MAX_PERSONAL_BOXES,
   PERSONAL_PER_KG_EUR,
-  bandFor,
+  SMALLEST_BOX_SIZE,
   boxDims,
   calculatePersonalQuote,
   getBoxSize,
-  getCategory,
   typicalBoxKg,
   whatsappLink,
   type PersonalMode,
 } from "@/lib/pricing";
 import BoxModel from "./BoxModel";
-import { eur, pct } from "./format";
+import { eur } from "./format";
+import SliderWithNumber from "./SliderWithNumber";
 
 /**
  * Personal parcels — someone sending boxes to family, not importing stock.
@@ -47,16 +47,39 @@ export default function PersonalCalculator({
 }) {
   const t = dict.personalCalculator;
   const arrow = arrowFor(locale);
+  // Defaults are deliberately the cheapest possible parcel — smallest box,
+  // one of it, lowest-duty category — so the first price a visitor sees is
+  // the floor, not a guess at their actual shipment. See SMALLEST_BOX_SIZE
+  // and LOWEST_DUTY_CATEGORY in pricing.ts.
   const [mode, setMode] = useState<PersonalMode>("boxes");
-  const [boxId, setBoxId] = useState("L");
-  const [numBoxes, setNumBoxes] = useState(3);
-  const [weight, setWeight] = useState(30);
-  const [categoryId, setCategoryId] = useState("used-household");
+  const [boxId, setBoxId] = useState(SMALLEST_BOX_SIZE.id);
+  const [numBoxes, setNumBoxes] = useState(1);
+  const [weight, setWeight] = useState(5);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([
+    LOWEST_DUTY_CATEGORY.id,
+  ]);
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
 
   const box = getBoxSize(boxId);
-  const category = getCategory(categoryId);
-  const categoryStrings = dict.cargoCategories[category.id];
   const byBoxes = mode === "boxes";
+
+  const selectedCategories = useMemo(
+    () => CARGO_CATEGORIES.filter((c) => selectedCategoryIds.includes(c.id)),
+    [selectedCategoryIds],
+  );
+  // Nothing here splits the parcel's weight per item, so a mixed selection
+  // can't be assessed item-by-item — the highest rate among what's picked
+  // stands in for the whole parcel. Conservative, and it reuses the exact
+  // same per-category math as a single pick; see personalDuty() in
+  // pricing.ts for the undefined-selection fallback.
+  const effectiveCategoryId = useMemo(
+    () =>
+      selectedCategories.length > 0
+        ? selectedCategories.reduce((max, c) => (c.duty > max.duty ? c : max))
+            .id
+        : undefined,
+    [selectedCategories],
+  );
 
   const quote = useMemo(
     () =>
@@ -66,12 +89,12 @@ export default function PersonalCalculator({
           boxId,
           numBoxes,
           weightKg: weight,
-          categoryId,
+          categoryId: effectiveCategoryId,
         },
         dict,
         locale,
       ),
-    [mode, boxId, numBoxes, weight, categoryId, dict, locale],
+    [mode, boxId, numBoxes, weight, effectiveCategoryId, dict, locale],
   );
 
   const summary = byBoxes
@@ -80,10 +103,15 @@ export default function PersonalCalculator({
       : t.summaryManyBoxes(numBoxes, box.label)
     : t.summaryWeight(weight);
 
+  const contentsLabel =
+    selectedCategories.length > 0
+      ? selectedCategories.map((c) => dict.cargoCategories[c.id].label).join(", ")
+      : t.contentsNotSpecified;
+
   const waMessage = t.whatsappMessage({
     destination: destinationName,
     summary,
-    categoryLabel: categoryStrings.label,
+    categoryLabel: contentsLabel,
     shipping: eur(quote.shippingEur, locale),
     duty: eur(quote.dutyEur, locale),
   });
@@ -188,21 +216,20 @@ export default function PersonalCalculator({
 
                 {/* ---- How many ---- */}
                 <div>
-                  <label htmlFor="numBoxes" className="text-sm font-semibold">
+                  <label id="numBoxes-label" htmlFor="numBoxes" className="text-sm font-semibold">
                     {t.howManyBoxes}
                     <span className="ms-2 font-normal tabular-nums text-muted">
                       {numBoxes}
                     </span>
                   </label>
-                  <input
+                  <SliderWithNumber
                     id="numBoxes"
-                    type="range"
+                    labelId="numBoxes-label"
                     min={1}
                     max={MAX_PERSONAL_BOXES}
                     step={1}
                     value={numBoxes}
-                    onChange={(e) => setNumBoxes(Number(e.target.value))}
-                    className="mt-4 w-full accent-[var(--accent)]"
+                    onChange={setNumBoxes}
                   />
                   <div className="mt-2 flex justify-between text-xs text-muted">
                     <span>{t.oneBox}</span>
@@ -216,21 +243,20 @@ export default function PersonalCalculator({
             ) : (
               /* ---- Weight ---- */
               <div>
-                <label htmlFor="weight" className="text-sm font-semibold">
+                <label id="weight-label" htmlFor="weight" className="text-sm font-semibold">
                   {t.totalWeight}
                   <span className="ms-2 font-normal tabular-nums text-muted">
                     {t.kgUnit(weight)}
                   </span>
                 </label>
-                <input
+                <SliderWithNumber
                   id="weight"
-                  type="range"
+                  labelId="weight-label"
                   min={5}
                   max={300}
                   step={5}
                   value={weight}
-                  onChange={(e) => setWeight(Number(e.target.value))}
-                  className="mt-4 w-full accent-[var(--accent)]"
+                  onChange={setWeight}
                 />
                 <div className="mt-2 flex justify-between text-xs text-muted">
                   <span>{t.kgUnit(5)}</span>
@@ -246,59 +272,117 @@ export default function PersonalCalculator({
                    shipping price, which stays flat. No declared value is
                    asked for, because customs assesses personal effects on
                    a deemed value per kilo, and the weight is already
-                   known from the boxes or the slider above. ---- */}
+                   known from the boxes or the slider above.
+
+                   Multi-select, cart-style: pick as many items as actually
+                   apply rather than one "category" that has to stand in for
+                   the whole box. No duty percentage is shown anywhere here
+                   — a personal sender shouldn't have to weigh customs rates
+                   against each other to answer "what's inside", any more
+                   than the box-vs-kilo choice above asks about HS codes.
+                   The rate still applies underneath (see effectiveCategoryId
+                   above); it's just not part of this decision. Collapsed by
+                   default since fifteen items is a lot to scan before ever
+                   reaching the result below. ---- */}
             <div>
               <label className="text-sm font-semibold">{t.whatsInIt}</label>
               <p className="mt-2 text-xs leading-relaxed text-muted">
                 {t.whatsInItBody}
               </p>
-              {/* Two-up even on the narrowest phone: fifteen full-width
-                  cards is a scroll, and each card is only a name and a
-                  rate. */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {CARGO_CATEGORIES.map((c) => {
-                  const on = c.id === categoryId;
-                  const strings = dict.cargoCategories[c.id];
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCategoryId(c.id)}
-                      aria-pressed={on}
-                      className={`relative overflow-hidden rounded-xl border py-3 ps-4 pe-2.5 text-start transition-all duration-200 sm:ps-5 sm:pe-3 ${
-                        on
-                          ? "border-fg/30 bg-bg-alt shadow-sm"
-                          : "border-line hover:border-fg/25"
-                      }`}
-                    >
-                      <span
-                        aria-hidden
-                        className="absolute inset-y-0 start-0 w-1.5"
-                        style={{ background: BAND_COLORS[bandFor(c.duty)] }}
-                      />
-                      {/* min-w-0 lets the name shrink and wrap; flex-wrap
-                          drops the rate onto its own line rather than
-                          pushing it under the card's overflow clip. Without
-                          both, "46.5%" renders as "46" on a 320px screen. */}
-                      <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                        <span className="min-w-0 text-sm font-semibold leading-tight">
+
+              {selectedCategories.length > 0 && (
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {selectedCategories.map((c) => {
+                    const strings = dict.cargoCategories[c.id];
+                    return (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedCategoryIds((ids) =>
+                              ids.filter((id) => id !== c.id),
+                            )
+                          }
+                          aria-label={t.removeItem(strings.label)}
+                          className="flex items-center gap-1.5 rounded-full border border-line bg-bg-alt py-1.5 ps-3 pe-2.5 text-xs font-medium transition-colors hover:border-fg/25"
+                        >
+                          {strings.label}
+                          <span aria-hidden className="text-muted">
+                            ×
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              <button
+                type="button"
+                aria-expanded={categoriesExpanded}
+                aria-controls="whats-in-it-list"
+                onClick={() => setCategoriesExpanded((v) => !v)}
+                className="mt-4 text-sm font-semibold text-accent underline-offset-4 hover:underline"
+              >
+                {categoriesExpanded
+                  ? t.doneChoosing
+                  : selectedCategories.length > 0
+                    ? t.itemsChosenEdit(selectedCategories.length)
+                    : t.chooseWhatsInside}
+              </button>
+
+              {categoriesExpanded && (
+                <fieldset id="whats-in-it-list" className="mt-4 grid grid-cols-2 gap-2">
+                  <legend className="sr-only">{t.whatsInIt}</legend>
+                  {CARGO_CATEGORIES.map((c) => {
+                    const on = selectedCategoryIds.includes(c.id);
+                    const strings = dict.cargoCategories[c.id];
+                    return (
+                      <label
+                        key={c.id}
+                        className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-start transition-colors sm:p-4 ${
+                          on
+                            ? "border-fg/30 bg-bg-alt shadow-sm"
+                            : "border-line hover:border-fg/25"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={() =>
+                            setSelectedCategoryIds((ids) =>
+                              on
+                                ? ids.filter((id) => id !== c.id)
+                                : [...ids, c.id],
+                            )
+                          }
+                          className="mt-0.5 shrink-0 accent-[var(--accent)]"
+                        />
+                        <span className="text-sm font-semibold leading-tight">
                           {strings.label}
                         </span>
-                        <span
-                          className="shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums text-white"
-                          style={{ background: BAND_COLORS[bandFor(c.duty)] }}
+                      </label>
+                    );
+                  })}
+                </fieldset>
+              )}
+
+              {selectedCategories.some((c) => dict.cargoCategories[c.id].caveat) && (
+                <div className="mt-4 space-y-2">
+                  {selectedCategories
+                    .filter((c) => dict.cargoCategories[c.id].caveat)
+                    .map((c) => {
+                      const strings = dict.cargoCategories[c.id];
+                      return (
+                        <p
+                          key={c.id}
+                          className="rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed"
                         >
-                          {pct(c.duty, locale)}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {categoryStrings.caveat && (
-                <p className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed">
-                  <strong>{categoryStrings.label}:</strong> {categoryStrings.caveat}
-                </p>
+                          <strong>{strings.label}:</strong> {strings.caveat}
+                        </p>
+                      );
+                    })}
+                </div>
               )}
             </div>
 

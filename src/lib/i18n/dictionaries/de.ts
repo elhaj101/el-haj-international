@@ -233,16 +233,23 @@ const de: Dictionary = {
   },
 
   pricingSentences: {
-    personalDutyFree: ({ categoryLabel, securityFeePct, deemedUsdPerKg, weightKg }) =>
-      `${categoryLabel} sind zollfrei — hier fällt nur die Sicherheitsgebühr von ${securityFeePct} an, auf einen unterstellten Wert von USD ${deemedUsdPerKg}/kg für ~${weightKg} kg.`,
+    personalDutyFree: ({ categoryLabel, securityFeePct, deemedEurPerKg, weightKg }) =>
+      `${categoryLabel} sind zollfrei — hier fällt nur die Sicherheitsgebühr von ${securityFeePct} an, auf einen unterstellten Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg.`,
     personalDutyCharged: ({
       weightKg,
-      deemedUsdPerKg,
+      deemedEurPerKg,
       dutyPct,
       categoryLabel,
       securityFeePct,
     }) =>
-      `~${weightKg} kg zu einem unterstellten Wert von USD ${deemedUsdPerKg}/kg, verzollt mit ${dutyPct} für ${categoryLabel} zuzüglich ${securityFeePct} Sicherheitsgebühr.`,
+      `~${weightKg} kg zu einem unterstellten Wert von ${deemedEurPerKg} EUR/kg, verzollt mit ${dutyPct} für ${categoryLabel} zuzüglich ${securityFeePct} Sicherheitsgebühr.`,
+    personalDutyUnspecified: ({
+      securityFeePct,
+      deemedEurPerKg,
+      weightKg,
+      unspecifiedDutyPct,
+    }) =>
+      `Sie haben noch nicht angegeben, was im Paket ist, daher wird ein pauschaler Platzhaltersatz von ${unspecifiedDutyPct} auf einen unterstellten Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg angenommen, zuzüglich ${securityFeePct} Sicherheitsgebühr. Wählen Sie oben aus, was Sie versenden, für eine genauere Schätzung.`,
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `Ein Karton der Größe ${boxLabel} zum Festpreis von ${priceEur}. Der Preis bleibt gleich, egal wie schwer er ist.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -262,8 +269,8 @@ const de: Dictionary = {
       } auf rund ${weightKg} kg kommen — ${altEur} bei ${perKgEur}/kg.`,
     personalAlternativeFromWeight: ({ boxesNeeded, boxLabel, altEur }) =>
       `Dieses Gewicht füllt normalerweise etwa ${boxesNeeded} Kartons der Größe ${boxLabel} — ${altEur} zum Festpreis pro Karton.`,
-    businessDutyByWeight: ({ deemedUsdPerKg, chargeableKg, dutyPct, securityFeePct }) =>
-      `Berechnet auf Basis eines unterstellten Werts von USD ${deemedUsdPerKg}/kg (${chargeableKg} kg), mit ${dutyPct} Zoll zuzüglich ${securityFeePct} Sicherheitsgebühr. Der tatsächliche Warenwert ändert an dieser Zahl nichts.`,
+    businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
+      `Berechnet auf Basis eines unterstellten Werts von ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), mit ${dutyPct} Zoll zuzüglich ${securityFeePct} Sicherheitsgebühr. Der tatsächliche Warenwert ändert an dieser Zahl nichts.`,
     businessDutyByValue: ({
       valueEur,
       dutyPct,
@@ -295,9 +302,14 @@ const de: Dictionary = {
     kgUnit: (n) => `${n} kg`,
     chargedOnActualWeight: (perKg) =>
       `Berechnet nach tatsächlichem Gewicht, zum Festpreis von ${perKg} pro Kilo, unabhängig von den Kartons.`,
-    whatsInIt: "Was ist darin?",
+    whatsInIt: "Was versenden Sie?",
     whatsInItBody:
-      "Das ändert nichts am Versandpreis. Es legt den Satz fest, den der libanesische Zoll bei Ankunft möglicherweise berechnet — der Prozentsatz auf jeder Karte.",
+      "Das ändert nichts am Versandpreis. Es legt den Satz fest, den der libanesische Zoll bei Ankunft möglicherweise berechnet. Wählen Sie so viele wie zutreffen — bleibt es leer, nehmen wir einen pauschalen Platzhaltersatz an.",
+    chooseWhatsInside: "Inhalt auswählen",
+    itemsChosenEdit: (n) => `${n} Artikel ausgewählt — bearbeiten`,
+    doneChoosing: "Fertig",
+    removeItem: (label) => `${label} entfernen`,
+    contentsNotSpecified: "Inhalt nicht angegeben",
     summaryOneBox: (boxLabel) => `1 × Karton ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} × Kartons ${boxLabel}`,
     summaryWeight: (kg) => `${kg} kg`,

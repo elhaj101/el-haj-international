@@ -179,19 +179,27 @@ export interface Dictionary {
     personalDutyFree: (p: {
       categoryLabel: string;
       securityFeePct: string;
-      deemedUsdPerKg: string;
+      deemedEurPerKg: string;
       weightKg: number;
     }) => string;
     /** category.duty > 0 branch of personalDuty(). */
     personalDutyCharged: (p: {
       weightKg: number;
-      deemedUsdPerKg: string;
+      deemedEurPerKg: string;
       dutyPct: string;
       /** Raw label, not pre-lowercased — German capitalizes nouns anywhere
           in a sentence, so "lowercase mid-sentence" is an English-specific
           styling choice each locale's own template applies (or doesn't). */
       categoryLabel: string;
       securityFeePct: string;
+    }) => string;
+    /** categoryId === undefined branch of personalDuty() — sender left the
+        "what are you sending" list empty. */
+    personalDutyUnspecified: (p: {
+      securityFeePct: string;
+      deemedEurPerKg: string;
+      weightKg: number;
+      unspecifiedDutyPct: string;
     }) => string;
     /** calculatePersonalQuote(), boxes mode, exactly one box. */
     personalBasisOneBox: (p: { boxLabel: string; priceEur: string }) => string;
@@ -220,7 +228,7 @@ export interface Dictionary {
     }) => string;
     /** calculateQuote(), weight-basis category. */
     businessDutyByWeight: (p: {
-      deemedUsdPerKg: string;
+      deemedEurPerKg: string;
       chargeableKg: number;
       dutyPct: string;
       securityFeePct: string;
@@ -256,6 +264,17 @@ export interface Dictionary {
     chargedOnActualWeight: (perKg: string) => string;
     whatsInIt: string;
     whatsInItBody: string;
+    /** Trigger label, collapsed, nothing picked yet. */
+    chooseWhatsInside: string;
+    /** Trigger label, collapsed, n items picked — reopens the list. */
+    itemsChosenEdit: (n: number) => string;
+    /** Trigger label, expanded — closes the list. */
+    doneChoosing: string;
+    /** Remove-chip button aria-label. */
+    removeItem: (label: string) => string;
+    /** Stands in for categoryLabel in the WhatsApp message when the sender
+        left the "what are you sending" list empty. */
+    contentsNotSpecified: string;
     summaryOneBox: (boxLabel: string) => string;
     summaryManyBoxes: (n: number, boxLabel: string) => string;
     summaryWeight: (kg: number) => string;
