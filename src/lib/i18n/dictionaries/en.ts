@@ -249,6 +249,8 @@ const en: Dictionary = {
       `One ${boxLabel} box at a flat ${priceEur}. The price is the same whatever it weighs.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
       `${numBoxes} × ${boxLabel} boxes at a flat ${priceEur} each. The price is the same whatever it weighs.`,
+    personalBasisMixedSizes: ({ breakdown }) =>
+      `${breakdown} — each size at its own flat price, whatever it weighs.`,
     personalBasisPerKg: ({ weightKg, perKgEur }) =>
       `${weightKg} kg at a flat ${perKgEur} per kilo.`,
     personalAlternativeFromBoxes: ({
@@ -266,6 +268,8 @@ const en: Dictionary = {
       `That weight normally fills about ${boxesNeeded} ${boxLabel} box${
         boxesNeeded === 1 ? "" : "es"
       } — ${altEur} at the flat box price.`,
+    personalAlternativeFromMixedBoxes: ({ totalBoxes, weightKg, altEur, perKgEur }) =>
+      `Those ${totalBoxes} boxes come to roughly ${weightKg} kg — ${altEur} at ${perKgEur}/kg.`,
     businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
       `Assessed on a deemed value of ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), at ${dutyPct} duty + ${securityFeePct} security fee. What the goods are actually worth does not change this figure.`,
     businessDutyByValue: ({
@@ -295,6 +299,8 @@ const en: Dictionary = {
     nBoxes: (n) => `${n} boxes`,
     sendingMoreThan: (max) =>
       `Sending more than ${max}? Message us — at that size it is worth pricing properly rather than by the box.`,
+    decrementBoxLabel: (boxLabel) => `One fewer ${boxLabel} box`,
+    incrementBoxLabel: (boxLabel) => `One more ${boxLabel} box`,
     totalWeight: "Total weight",
     kgUnit: (n) => `${n} kg`,
     chargedOnActualWeight: (perKg) =>
@@ -309,6 +315,7 @@ const en: Dictionary = {
     contentsNotSpecified: "contents not specified",
     summaryOneBox: (boxLabel) => `1 × ${boxLabel} box`,
     summaryManyBoxes: (n, boxLabel) => `${n} × ${boxLabel} boxes`,
+    summaryMixedBoxes: (breakdown) => `${breakdown} boxes`,
     summaryWeight: (kg) => `${kg} kg`,
     checkThisWithUs: "Check this with us",
     check: "Check",

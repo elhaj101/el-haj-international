@@ -14,7 +14,6 @@ import {
   SMALLEST_BOX_SIZE,
   boxDims,
   calculatePersonalQuote,
-  getBoxSize,
   typicalBoxKg,
   whatsappLink,
   type PersonalMode,
@@ -52,16 +51,32 @@ export default function PersonalCalculator({
   // the floor, not a guess at their actual shipment. See SMALLEST_BOX_SIZE
   // and LOWEST_DUTY_CATEGORY in pricing.ts.
   const [mode, setMode] = useState<PersonalMode>("boxes");
-  const [boxId, setBoxId] = useState(SMALLEST_BOX_SIZE.id);
-  const [numBoxes, setNumBoxes] = useState(1);
+  const [boxCounts, setBoxCounts] = useState<Record<string, number>>({
+    [SMALLEST_BOX_SIZE.id]: 1,
+  });
   const [weight, setWeight] = useState(5);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([
     LOWEST_DUTY_CATEGORY.id,
   ]);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
 
-  const box = getBoxSize(boxId);
   const byBoxes = mode === "boxes";
+
+  // One line per size that actually has a count, in BOX_SIZES order — a
+  // mixed cart is just these summed, each size keeping its own flat price
+  // (see calculatePersonalQuote's "boxes" branch, which derives the same
+  // lines independently from boxCounts).
+  const boxLines = useMemo(
+    () =>
+      BOX_SIZES.map((box) => ({ box, count: boxCounts[box.id] ?? 0 })).filter(
+        (l) => l.count > 0,
+      ),
+    [boxCounts],
+  );
+  const totalBoxCount = boxLines.reduce((sum, l) => sum + l.count, 0);
+
+  const setCount = (boxId: string, count: number) =>
+    setBoxCounts((counts) => ({ ...counts, [boxId]: count }));
 
   const selectedCategories = useMemo(
     () => CARGO_CATEGORIES.filter((c) => selectedCategoryIds.includes(c.id)),
@@ -86,21 +101,24 @@ export default function PersonalCalculator({
       calculatePersonalQuote(
         {
           mode,
-          boxId,
-          numBoxes,
+          boxCounts,
           weightKg: weight,
           categoryId: effectiveCategoryId,
         },
         dict,
         locale,
       ),
-    [mode, boxId, numBoxes, weight, effectiveCategoryId, dict, locale],
+    [mode, boxCounts, weight, effectiveCategoryId, dict, locale],
   );
 
   const summary = byBoxes
-    ? numBoxes === 1
-      ? t.summaryOneBox(box.label)
-      : t.summaryManyBoxes(numBoxes, box.label)
+    ? boxLines.length === 1
+      ? boxLines[0].count === 1
+        ? t.summaryOneBox(boxLines[0].box.label)
+        : t.summaryManyBoxes(boxLines[0].count, boxLines[0].box.label)
+      : t.summaryMixedBoxes(
+          boxLines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
+        )
     : t.summaryWeight(weight);
 
   const contentsLabel =
@@ -158,87 +176,89 @@ export default function PersonalCalculator({
 
             {byBoxes ? (
               <>
-                {/* ---- Box size ---- */}
+                {/* ---- Box size and how many — one combined choice. Each
+                       size keeps its own flat price, so this is a quantity
+                       per size (a small cart, not a single pick) rather
+                       than "choose one size, then a count" — mixing e.g.
+                       2×M with 1×XXL is a real, common shipment. ---- */}
                 <div>
-                  <label className="text-sm font-semibold">{t.boxSize}</label>
-                  {/* Three across at every width. On phones the dimensions
-                      and capacity are hidden here rather than squeezed into
-                      an 85px column — the model directly below states both
-                      for whichever box is selected. */}
-                  <div className="mt-4 grid grid-cols-3 gap-2">
+                  <label id="box-sizes-label" className="text-sm font-semibold">
+                    {t.boxSize}
+                  </label>
+                  <div className="mt-4 space-y-2">
                     {BOX_SIZES.map((b) => {
-                      const on = b.id === boxId;
+                      const count = boxCounts[b.id] ?? 0;
                       return (
-                        <button
+                        <div
                           key={b.id}
-                          type="button"
-                          onClick={() => setBoxId(b.id)}
-                          aria-pressed={on}
-                          className={`rounded-xl border p-3 text-start transition-colors sm:p-4 ${
-                            on
+                          className={`flex items-center gap-4 rounded-xl border p-3 sm:p-4 ${
+                            count > 0
                               ? "border-fg/30 bg-bg-alt shadow-sm"
-                              : "border-line hover:border-fg/25"
+                              : "border-line"
                           }`}
                         >
-                          <span className="flex flex-wrap items-baseline justify-between gap-x-2">
-                            <span className="display text-xl">{b.label}</span>
-                            <span className="text-sm font-semibold tabular-nums">
-                              {eur(b.priceEur, locale)}
+                          <div className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-baseline gap-x-2">
+                              <span className="display text-xl">{b.label}</span>
+                              <span className="text-sm font-semibold tabular-nums">
+                                {eur(b.priceEur, locale)}
+                              </span>
                             </span>
-                          </span>
-                          <span className="mt-1.5 hidden text-[0.7rem] leading-snug text-muted sm:block">
-                            {boxDims(b)}
-                          </span>
-                          <span className="mt-1 hidden text-[0.7rem] leading-snug text-muted sm:block">
-                            {t.holdsAbout(typicalBoxKg(b))}
-                          </span>
-                        </button>
+                            <span className="mt-1 hidden text-[0.7rem] leading-snug text-muted sm:block">
+                              {boxDims(b)} · {t.holdsAbout(typicalBoxKg(b))}
+                            </span>
+                          </div>
+                          <QuantityStepper
+                            label={b.label}
+                            count={count}
+                            onChange={(n) => setCount(b.id, n)}
+                            canIncrement={totalBoxCount < MAX_PERSONAL_BOXES}
+                            canDecrement={
+                              count > 0 && !(count === 1 && totalBoxCount === 1)
+                            }
+                            decrementLabel={t.decrementBoxLabel(b.label)}
+                            incrementLabel={t.incrementBoxLabel(b.label)}
+                          />
+                        </div>
                       );
                     })}
-                  </div>
-                </div>
-
-                {/* ---- The box itself, to scale. Sits directly under the
-                       size buttons so the change is visible at the moment
-                       it is made. ---- */}
-                <div className="rounded-2xl border border-line bg-bg-alt px-4 py-5">
-                  <BoxModel
-                    box={box}
-                    ariaLabel={t.scaleModelLabel(box.label, box.w, box.d, box.h)}
-                  />
-                  <p className="mt-3 text-center text-xs text-muted">
-                    <span className="font-semibold text-fg">
-                      {box.label} · {boxDims(box)} · {t.holdsAbout(typicalBoxKg(box))}
-                    </span>
-                    <span className="mt-0.5 block">{t.drawnToScale}</span>
-                  </p>
-                </div>
-
-                {/* ---- How many ---- */}
-                <div>
-                  <label id="numBoxes-label" htmlFor="numBoxes" className="text-sm font-semibold">
-                    {t.howManyBoxes}
-                    <span className="ms-2 font-normal tabular-nums text-muted">
-                      {numBoxes}
-                    </span>
-                  </label>
-                  <SliderWithNumber
-                    id="numBoxes"
-                    labelId="numBoxes-label"
-                    min={1}
-                    max={MAX_PERSONAL_BOXES}
-                    step={1}
-                    value={numBoxes}
-                    onChange={setNumBoxes}
-                  />
-                  <div className="mt-2 flex justify-between text-xs text-muted">
-                    <span>{t.oneBox}</span>
-                    <span>{t.nBoxes(MAX_PERSONAL_BOXES)}</span>
                   </div>
                   <p className="mt-3 text-xs text-muted">
                     {t.sendingMoreThan(MAX_PERSONAL_BOXES)}
                   </p>
                 </div>
+
+                {/* ---- The boxes themselves, to scale, one per size in the
+                       cart — proportioned correctly against each other, so
+                       "2×M or 1×L?" is answerable by looking rather than
+                       comparing centimetres. ---- */}
+                {boxLines.length > 0 && (
+                  <div className="rounded-2xl border border-line bg-bg-alt px-4 py-5">
+                    <div className="flex flex-wrap justify-center gap-6">
+                      {boxLines.map((l) => (
+                        <div key={l.box.id} className="w-28">
+                          <BoxModel
+                            box={l.box}
+                            ariaLabel={t.scaleModelLabel(
+                              l.box.label,
+                              l.box.w,
+                              l.box.d,
+                              l.box.h,
+                            )}
+                          />
+                          <p className="mt-2 text-center text-xs text-muted">
+                            <span className="font-semibold text-fg">
+                              {l.count} × {l.box.label}
+                            </span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-center text-xs text-muted">
+                      {t.drawnToScale}
+                    </p>
+                  </div>
+                )}
               </>
             ) : (
               /* ---- Weight ---- */
@@ -499,6 +519,51 @@ function PersonalResult({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** A plain "− N +" quantity control — precise by construction (each tap is
+    exactly one box), unlike a slider, and the ranges here are small enough
+    that dragging was never the right interaction to begin with. */
+function QuantityStepper({
+  label,
+  count,
+  onChange,
+  canIncrement,
+  canDecrement,
+  decrementLabel,
+  incrementLabel,
+}: {
+  label: string;
+  count: number;
+  onChange: (n: number) => void;
+  canIncrement: boolean;
+  canDecrement: boolean;
+  decrementLabel: string;
+  incrementLabel: string;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1" role="group" aria-label={label}>
+      <button
+        type="button"
+        onClick={() => onChange(count - 1)}
+        disabled={!canDecrement}
+        aria-label={decrementLabel}
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-lg leading-none transition-colors hover:border-fg/25 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        −
+      </button>
+      <span className="w-6 text-center text-sm font-semibold tabular-nums">{count}</span>
+      <button
+        type="button"
+        onClick={() => onChange(count + 1)}
+        disabled={!canIncrement}
+        aria-label={incrementLabel}
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-lg leading-none transition-colors hover:border-fg/25 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        +
+      </button>
     </div>
   );
 }

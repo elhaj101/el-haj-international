@@ -206,13 +206,11 @@ export const typicalBoxKg = (box: BoxSize) =>
 export interface PersonalQuoteInput {
   mode: PersonalMode;
   /**
-   * Which box. Prices the parcel in "boxes" mode; in "perkg" mode it is
-   * only the reference size for the "that weight fills about N boxes"
-   * comparison, and does not affect the price.
+   * "boxes" mode — count per BOX_SIZES id, e.g. `{ M: 2, XXL: 1 }`. Sizes
+   * absent or at 0 aren't part of the parcel. Each size keeps its own flat
+   * price; nothing here averages or blends across sizes.
    */
-  boxId?: string;
-  /** "boxes" mode. */
-  numBoxes?: number;
+  boxCounts?: Record<string, number>;
   /** "perkg" mode. */
   weightKg?: number;
   /** Id from CARGO_CATEGORIES — sets the duty rate. */
@@ -318,12 +316,23 @@ export function calculatePersonalQuote(
   const t = dict.pricingSentences;
 
   if (input.mode === "boxes") {
-    const box = getBoxSize(input.boxId ?? "L");
-    const numBoxes = Math.max(1, Math.round(input.numBoxes || 1));
-    const shippingEur = round(numBoxes * box.priceEur);
+    const counts = input.boxCounts ?? {};
+    // Each size keeps its own flat price and typical weight — a mixed
+    // parcel is just those lines summed, not a blended "average box".
+    const lines = BOX_SIZES.map((box) => ({
+      box,
+      count: Math.max(0, Math.round(counts[box.id] ?? 0)),
+    })).filter((l) => l.count > 0);
 
-    // Weight is implied from the box size, at a typical fill.
-    const weightKg = typicalBoxKg(box) * numBoxes;
+    const shippingEur = round(
+      lines.reduce((sum, l) => sum + l.count * l.box.priceEur, 0),
+    );
+    const weightKg = lines.reduce(
+      (sum, l) => sum + l.count * typicalBoxKg(l.box),
+      0,
+    );
+    const totalBoxes = lines.reduce((sum, l) => sum + l.count, 0);
+
     const { dutyEur, dutyBasis } = personalDuty(
       weightKg,
       input.categoryId,
@@ -334,32 +343,52 @@ export function calculatePersonalQuote(
     // What the same parcel would cost per kilo.
     const alternativeEur = round(weightKg * PERSONAL_PER_KG_EUR);
 
+    // A single size (the common case, including the empty-cart default)
+    // keeps the specific "N × size at €X each" phrasing; more than one
+    // size falls back to a plain breakdown — box *labels* (M/L/XXL) are
+    // size codes, not words needing per-locale plural agreement, so
+    // joining them needs no localization beyond the sentence around them.
+    const only = lines.length === 1 ? lines[0] : null;
+    const basis = only
+      ? only.count === 1
+        ? t.personalBasisOneBox({
+            boxLabel: only.box.label,
+            priceEur: eur(only.box.priceEur, locale),
+          })
+        : t.personalBasisManyBoxes({
+            numBoxes: only.count,
+            boxLabel: only.box.label,
+            priceEur: eur(only.box.priceEur, locale),
+          })
+      : t.personalBasisMixedSizes({
+          breakdown: lines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
+        });
+
+    const alternativeLabel = only
+      ? t.personalAlternativeFromBoxes({
+          boxLabel: only.box.label,
+          typicalKg: typicalBoxKg(only.box),
+          numBoxes: only.count,
+          weightKg,
+          altEur: eur(alternativeEur, locale),
+          perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+        })
+      : t.personalAlternativeFromMixedBoxes({
+          totalBoxes,
+          weightKg,
+          altEur: eur(alternativeEur, locale),
+          perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+        });
+
     return {
       shippingEur,
       weightKg,
       dutyEur,
       totalEur: round(shippingEur + dutyEur),
-      basis:
-        numBoxes === 1
-          ? t.personalBasisOneBox({
-              boxLabel: box.label,
-              priceEur: eur(box.priceEur, locale),
-            })
-          : t.personalBasisManyBoxes({
-              numBoxes,
-              boxLabel: box.label,
-              priceEur: eur(box.priceEur, locale),
-            }),
+      basis,
       dutyBasis,
       alternativeEur,
-      alternativeLabel: t.personalAlternativeFromBoxes({
-        boxLabel: box.label,
-        typicalKg: typicalBoxKg(box),
-        numBoxes,
-        weightKg,
-        altEur: eur(alternativeEur, locale),
-        perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
-      }),
+      alternativeLabel,
     };
   }
 
@@ -372,8 +401,11 @@ export function calculatePersonalQuote(
     locale,
   );
 
-  // The cheapest whole number of boxes that would hold this weight.
-  const box = getBoxSize(input.boxId ?? "L");
+  // The cheapest whole number of boxes that would hold this weight. Always
+  // phrased against the smallest box — there's no single "selected size"
+  // once boxes mode allows a mix, and the comparison is illustrative
+  // either way, not something the price depends on.
+  const box = SMALLEST_BOX_SIZE;
   const perBoxKg = typicalBoxKg(box);
   const boxesNeeded = perBoxKg > 0 ? Math.ceil(weightKg / perBoxKg) : 0;
   const alternativeEur = boxesNeeded > 0 ? round(boxesNeeded * box.priceEur) : null;

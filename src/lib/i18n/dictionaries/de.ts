@@ -254,6 +254,8 @@ const de: Dictionary = {
       `Ein Karton der Größe ${boxLabel} zum Festpreis von ${priceEur}. Der Preis bleibt gleich, egal wie schwer er ist.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
       `${numBoxes} × Kartons der Größe ${boxLabel} zum Festpreis von je ${priceEur}. Der Preis bleibt gleich, egal wie schwer sie sind.`,
+    personalBasisMixedSizes: ({ breakdown }) =>
+      `${breakdown} — jede Größe zu ihrem eigenen Festpreis, unabhängig vom Gewicht.`,
     personalBasisPerKg: ({ weightKg, perKgEur }) =>
       `${weightKg} kg zum Festpreis von ${perKgEur} pro Kilo.`,
     personalAlternativeFromBoxes: ({
@@ -269,6 +271,8 @@ const de: Dictionary = {
       } auf rund ${weightKg} kg kommen — ${altEur} bei ${perKgEur}/kg.`,
     personalAlternativeFromWeight: ({ boxesNeeded, boxLabel, altEur }) =>
       `Dieses Gewicht füllt normalerweise etwa ${boxesNeeded} Kartons der Größe ${boxLabel} — ${altEur} zum Festpreis pro Karton.`,
+    personalAlternativeFromMixedBoxes: ({ totalBoxes, weightKg, altEur, perKgEur }) =>
+      `Diese ${totalBoxes} Kartons kommen auf rund ${weightKg} kg — ${altEur} bei ${perKgEur}/kg.`,
     businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
       `Berechnet auf Basis eines unterstellten Werts von ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), mit ${dutyPct} Zoll zuzüglich ${securityFeePct} Sicherheitsgebühr. Der tatsächliche Warenwert ändert an dieser Zahl nichts.`,
     businessDutyByValue: ({
@@ -298,6 +302,8 @@ const de: Dictionary = {
     nBoxes: (n) => `${n} Kartons`,
     sendingMoreThan: (max) =>
       `Mehr als ${max}? Schreiben Sie uns — bei dieser Menge lohnt es sich, richtig zu kalkulieren, statt pro Karton zu rechnen.`,
+    decrementBoxLabel: (boxLabel) => `Einen Karton ${boxLabel} weniger`,
+    incrementBoxLabel: (boxLabel) => `Einen Karton ${boxLabel} mehr`,
     totalWeight: "Gesamtgewicht",
     kgUnit: (n) => `${n} kg`,
     chargedOnActualWeight: (perKg) =>
@@ -312,6 +318,7 @@ const de: Dictionary = {
     contentsNotSpecified: "Inhalt nicht angegeben",
     summaryOneBox: (boxLabel) => `1 × Karton ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} × Kartons ${boxLabel}`,
+    summaryMixedBoxes: (breakdown) => `${breakdown} Kartons`,
     summaryWeight: (kg) => `${kg} kg`,
     checkThisWithUs: "Bei uns nachfragen",
     check: "Nachfragen",

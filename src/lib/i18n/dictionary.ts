@@ -209,13 +209,27 @@ export interface Dictionary {
       boxLabel: string;
       priceEur: string;
     }) => string;
+    /** calculatePersonalQuote(), boxes mode, more than one size selected.
+        `breakdown` is a pre-joined "N × size" list (box labels are size
+        codes like M/L/XXL, not words, so no per-locale plural agreement
+        is needed on it). */
+    personalBasisMixedSizes: (p: { breakdown: string }) => string;
     /** calculatePersonalQuote(), per-kilo mode. */
     personalBasisPerKg: (p: { weightKg: number; perKgEur: string }) => string;
-    /** "what the same parcel would cost the other way" — from boxes mode. */
+    /** "what the same parcel would cost the other way" — from boxes mode,
+        exactly one size selected. */
     personalAlternativeFromBoxes: (p: {
       boxLabel: string;
       typicalKg: number;
       numBoxes: number;
+      weightKg: number;
+      altEur: string;
+      perKgEur: string;
+    }) => string;
+    /** Same comparison, boxes mode with more than one size selected —
+        no single "typical box" to anchor the sentence to. */
+    personalAlternativeFromMixedBoxes: (p: {
+      totalBoxes: number;
       weightKg: number;
       altEur: string;
       perKgEur: string;
@@ -259,6 +273,9 @@ export interface Dictionary {
     oneBox: string;
     nBoxes: (n: number) => string;
     sendingMoreThan: (max: number) => string;
+    /** Aria-labels for the per-size quantity stepper's − / + buttons. */
+    decrementBoxLabel: (boxLabel: string) => string;
+    incrementBoxLabel: (boxLabel: string) => string;
     totalWeight: string;
     kgUnit: (n: number) => string;
     chargedOnActualWeight: (perKg: string) => string;
@@ -277,6 +294,9 @@ export interface Dictionary {
     contentsNotSpecified: string;
     summaryOneBox: (boxLabel: string) => string;
     summaryManyBoxes: (n: number, boxLabel: string) => string;
+    /** More than one box size selected. `breakdown` is a pre-joined
+        "N × size" list, see personalBasisMixedSizes. */
+    summaryMixedBoxes: (breakdown: string) => string;
     summaryWeight: (kg: number) => string;
     checkThisWithUs: string;
     check: string;

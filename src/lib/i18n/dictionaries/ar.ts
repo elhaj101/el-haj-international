@@ -271,6 +271,8 @@ const ar: Dictionary = {
       `كرتونة واحدة مقاس ${boxLabel} بسعر ثابت ${priceEur}. السعر نفسه مهما كان الوزن.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
       `${numBoxes} ${boxWord(numBoxes)} مقاس ${boxLabel} بسعر ثابت ${priceEur} للواحدة. السعر نفسه مهما كان الوزن.`,
+    personalBasisMixedSizes: ({ breakdown }) =>
+      `${breakdown} — لكل مقاس سعره الثابت الخاص، بصرف النظر عن الوزن.`,
     personalBasisPerKg: ({ weightKg, perKgEur }) =>
       `${weightKg} كغ بسعر ثابت ${perKgEur} للكيلوغرام.`,
     personalAlternativeFromBoxes: ({
@@ -286,6 +288,8 @@ const ar: Dictionary = {
       } نحو ${weightKg} كغ — أي ${altEur} بسعر ${perKgEur} للكيلوغرام.`,
     personalAlternativeFromWeight: ({ boxesNeeded, boxLabel, altEur }) =>
       `هذا الوزن يملأ عادةً نحو ${boxesNeeded} ${boxWord(boxesNeeded)} مقاس ${boxLabel} — أي ${altEur} بسعر الكرتونة الثابت.`,
+    personalAlternativeFromMixedBoxes: ({ totalBoxes, weightKg, altEur, perKgEur }) =>
+      `${totalBoxes} ${boxWord(totalBoxes)} تزن نحو ${weightKg} كغ إجمالًا — أي ${altEur} بسعر ${perKgEur} للكيلوغرام.`,
     businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
       `يُحتسب على أساس قيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام (${chargeableKg} كغ)، برسم جمركي ${dutyPct} إضافةً إلى رسم أمان ${securityFeePct}. القيمة الفعلية للبضاعة لا تغيّر هذا الرقم.`,
     businessDutyByValue: ({
@@ -314,6 +318,8 @@ const ar: Dictionary = {
     nBoxes: (n) => `${n} ${boxWord(n)}`,
     sendingMoreThan: (max) =>
       `ترسل أكثر من ${max}؟ راسلنا — عند هذا الحجم يستحق الأمر تسعيرًا دقيقًا بدل الاحتساب بالكرتونة.`,
+    decrementBoxLabel: (boxLabel) => `إنقاص كرتونة مقاس ${boxLabel}`,
+    incrementBoxLabel: (boxLabel) => `إضافة كرتونة مقاس ${boxLabel}`,
     totalWeight: "الوزن الإجمالي",
     kgUnit: (n) => `${n} كغ`,
     chargedOnActualWeight: (perKg) =>
@@ -328,6 +334,7 @@ const ar: Dictionary = {
     contentsNotSpecified: "المحتوى غير محدد",
     summaryOneBox: (boxLabel) => `كرتونة واحدة مقاس ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} ${boxWord(n)} مقاس ${boxLabel}`,
+    summaryMixedBoxes: (breakdown) => `${breakdown} من الكراتين`,
     summaryWeight: (kg) => `${kg} كغ`,
     checkThisWithUs: "استفسر عن هذا التقدير",
     check: "استفسر",
