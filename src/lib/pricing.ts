@@ -30,6 +30,7 @@
    =================================================================== */
 
 import { eur, num, pct } from "@/components/calculator/format";
+import { GERMANY_COUNTRY_ID } from "./euCountries";
 import type { Dictionary } from "./i18n/dictionary";
 import type { Locale } from "./i18n/locales";
 
@@ -144,6 +145,103 @@ export type ShipmentProfile = "personal" | "business";
 /** Personal parcels price one of two ways, customer's choice. */
 export type PersonalMode = "boxes" | "perkg";
 
+/**
+ * `pickup` — Berlin/Brandenburg, we collect it, no DHL leg at all.
+ * `domestic-dhl` — rest of Germany, customer ships to us via DHL Paket.
+ * `eu-dhl` — rest of the EU, customer ships to us via DHL Paket International.
+ * Derived from the country dropdown (see EU_COUNTRIES in euCountries.ts)
+ * plus, for Germany, a free-text city field — see `deriveShippingZone`.
+ */
+export type ShippingZone = "pickup" | "domestic-dhl" | "eu-dhl";
+
+/**
+ * Berlin (the city itself, plus its well-known boroughs) and Brandenburg's
+ * larger towns, normalised (lowercase, umlauts folded to their plain-ASCII
+ * spelling) for matching against whatever the customer types in the city
+ * field. This is necessarily incomplete — Brandenburg alone has hundreds
+ * of municipalities — so it is best-effort, same tolerance as every other
+ * commercial-model number in this file: a real Brandenburg town that
+ * isn't listed here falls through to `domestic-dhl`, the safer default
+ * (see the comment on the DE default in PersonalCalculator.tsx), not a
+ * wrong price in the cheap direction.
+ */
+const BERLIN_BRANDENBURG_PLACES = new Set([
+  // Berlin + well-known boroughs
+  "berlin",
+  "mitte",
+  "kreuzberg",
+  "friedrichshain",
+  "charlottenburg",
+  "wilmersdorf",
+  "schoneberg",
+  "tempelhof",
+  "neukolln",
+  "spandau",
+  "steglitz",
+  "zehlendorf",
+  "pankow",
+  "prenzlauer berg",
+  "reinickendorf",
+  "marzahn",
+  "hellersdorf",
+  "lichtenberg",
+  "treptow",
+  "kopenick",
+  // Brandenburg's larger towns
+  "potsdam",
+  "cottbus",
+  "brandenburg an der havel",
+  "frankfurt (oder)",
+  "frankfurt an der oder",
+  "oranienburg",
+  "eberswalde",
+  "bernau",
+  "bernau bei berlin",
+  "falkensee",
+  "neuruppin",
+  "konigs wusterhausen",
+  "teltow",
+  "furstenwalde",
+  "rathenow",
+  "wittenberge",
+  "schwedt",
+  "luckenwalde",
+  "senftenberg",
+  "spremberg",
+  "finsterwalde",
+  "prenzlau",
+  "wittstock",
+  "strausberg",
+  "hennigsdorf",
+  "bad freienwalde",
+  "nauen",
+  "zossen",
+  "werder",
+  "ludwigsfelde",
+]);
+
+/** Lowercase + fold German umlauts/ß to their plain-ASCII spelling, so
+    "Königs Wusterhausen" and "konigs wusterhausen" match the same entry. */
+const normalizePlaceName = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/ä/g, "a")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ß/g, "ss");
+
+export const isBerlinBrandenburgCity = (city: string) =>
+  BERLIN_BRANDENBURG_PLACES.has(normalizePlaceName(city));
+
+export function deriveShippingZone(
+  countryId: string,
+  city: string,
+): ShippingZone {
+  if (countryId !== GERMANY_COUNTRY_ID) return "eu-dhl";
+  return isBerlinBrandenburgCity(city) ? "pickup" : "domestic-dhl";
+}
+
 export interface BoxSize {
   id: string;
   label: string;
@@ -152,8 +250,26 @@ export interface BoxSize {
   h: number;
   d: number;
   volumeM3: number;
-  /** PLACEHOLDER — flat price for this box, whatever it weighs. */
-  priceEur: number;
+  /**
+   * PLACEHOLDER (pickup) + REAL (the other two) — three prices, one per
+   * `ShippingZone`, not one flat price. `pickup` is still an invented
+   * benchmark like the old single `priceEur` was. `domestic-dhl` and
+   * `eu-dhl` are that same pickup price plus Deutsche Post/DHL's real
+   * published Paket rate for this box's weight (pulled 2026-09-15, price
+   * sheet effective 01.01.2026) — full cost pass-through, no markup and no
+   * discount, so switching zones changes what we charge but not what we
+   * keep. `null` means the box cannot travel that way at all: DHL's
+   * weight caps (31.5 kg domestic, 30 kg international) are both below
+   * XXL's own ~41 kg typical capacity, so XXL only exists in `pickup`.
+   * `pickup` itself is never null — every box size is collectable in
+   * person, which is what keeps SMALLEST_BOX_SIZE's ranking below valid
+   * without an extra null check.
+   */
+  pricesByZone: {
+    pickup: number;
+    "domestic-dhl": number | null;
+    "eu-dhl": number | null;
+  };
   note?: string;
 }
 
@@ -163,9 +279,33 @@ export interface BoxSize {
  * fields directly — nothing parses the display string.
  */
 export const BOX_SIZES: BoxSize[] = [
-  { id: "M", label: "M", w: 40, d: 30, h: 30, volumeM3: 0.036, priceEur: 40 },
-  { id: "L", label: "L", w: 60, d: 38, h: 38, volumeM3: 0.0866, priceEur: 60 },
-  { id: "XXL", label: "XXL", w: 75, d: 42, h: 41, volumeM3: 0.1291, priceEur: 75 },
+  {
+    id: "M",
+    label: "M",
+    w: 40,
+    d: 30,
+    h: 30,
+    volumeM3: 0.036,
+    pricesByZone: { pickup: 40, "domestic-dhl": 58.99, "eu-dhl": 71.49 },
+  },
+  {
+    id: "L",
+    label: "L",
+    w: 60,
+    d: 38,
+    h: 38,
+    volumeM3: 0.0866,
+    pricesByZone: { pickup: 60, "domestic-dhl": 83.99, "eu-dhl": 108.49 },
+  },
+  {
+    id: "XXL",
+    label: "XXL",
+    w: 75,
+    d: 42,
+    h: 41,
+    volumeM3: 0.1291,
+    pricesByZone: { pickup: 75, "domestic-dhl": null, "eu-dhl": null },
+  },
 ];
 
 /** "60 × 38 × 38 cm", built from the real numbers so the two can't drift. */
@@ -174,14 +314,22 @@ export const boxDims = (b: BoxSize) => `${b.w} × ${b.d} × ${b.h} cm`;
 export const getBoxSize = (id: string) =>
   BOX_SIZES.find((b) => b.id === id) ?? BOX_SIZES[1];
 
+/** This box's price in a given zone, or null if it can't ship that way. */
+export const priceForZone = (box: BoxSize, zone: ShippingZone) =>
+  box.pricesByZone[zone];
+
+export const isBoxOfferedInZone = (box: BoxSize, zone: ShippingZone) =>
+  priceForZone(box, zone) !== null;
+
 /**
  * Cheapest box — computed, not hand-picked, so it can't drift from
  * BOX_SIZES if a price changes. Both calculators default to this rather
  * than a "typical" size, so the first number a visitor sees is the floor,
- * not a guess at their actual shipment.
+ * not a guess at their actual shipment. Ranked on the `pickup` price: M is
+ * cheapest in every zone, so this ordering holds regardless of zone.
  */
 export const SMALLEST_BOX_SIZE = BOX_SIZES.reduce((min, b) =>
-  b.priceEur < min.priceEur ? b : min,
+  b.pricesByZone.pickup < min.pricesByZone.pickup ? b : min,
 );
 
 /** PLACEHOLDER — flat per-kilo price, the alternative to a box price. */
@@ -215,6 +363,8 @@ export interface PersonalQuoteInput {
   weightKg?: number;
   /** Id from CARGO_CATEGORIES — sets the duty rate. */
   categoryId?: string;
+  /** Decides which of a box's three prices applies — see ShippingZone. */
+  zone: ShippingZone;
 }
 
 export interface PersonalQuote {
@@ -317,15 +467,21 @@ export function calculatePersonalQuote(
 
   if (input.mode === "boxes") {
     const counts = input.boxCounts ?? {};
-    // Each size keeps its own flat price and typical weight — a mixed
-    // parcel is just those lines summed, not a blended "average box".
+    // Each size keeps its own flat price (zone-dependent — see
+    // priceForZone) and typical weight — a mixed parcel is just those
+    // lines summed, not a blended "average box". `?? 0` only guards a box
+    // whose zone stopped offering it a moment ago, before the calculator's
+    // own reset effect clears its count.
     const lines = BOX_SIZES.map((box) => ({
       box,
       count: Math.max(0, Math.round(counts[box.id] ?? 0)),
     })).filter((l) => l.count > 0);
 
     const shippingEur = round(
-      lines.reduce((sum, l) => sum + l.count * l.box.priceEur, 0),
+      lines.reduce(
+        (sum, l) => sum + l.count * (priceForZone(l.box, input.zone) ?? 0),
+        0,
+      ),
     );
     const weightKg = lines.reduce(
       (sum, l) => sum + l.count * typicalBoxKg(l.box),
@@ -353,12 +509,12 @@ export function calculatePersonalQuote(
       ? only.count === 1
         ? t.personalBasisOneBox({
             boxLabel: only.box.label,
-            priceEur: eur(only.box.priceEur, locale),
+            priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
           })
         : t.personalBasisManyBoxes({
             numBoxes: only.count,
             boxLabel: only.box.label,
-            priceEur: eur(only.box.priceEur, locale),
+            priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
           })
       : t.personalBasisMixedSizes({
           breakdown: lines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
@@ -408,7 +564,10 @@ export function calculatePersonalQuote(
   const box = SMALLEST_BOX_SIZE;
   const perBoxKg = typicalBoxKg(box);
   const boxesNeeded = perBoxKg > 0 ? Math.ceil(weightKg / perBoxKg) : 0;
-  const alternativeEur = boxesNeeded > 0 ? round(boxesNeeded * box.priceEur) : null;
+  const alternativeEur =
+    boxesNeeded > 0
+      ? round(boxesNeeded * (priceForZone(box, input.zone) ?? 0))
+      : null;
 
   return {
     shippingEur,

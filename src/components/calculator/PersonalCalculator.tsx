@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
+import { EU_COUNTRIES, GERMANY_COUNTRY_ID } from "@/lib/euCountries";
 import {
   BOX_SIZES,
   CARGO_CATEGORIES,
@@ -14,6 +15,10 @@ import {
   SMALLEST_BOX_SIZE,
   boxDims,
   calculatePersonalQuote,
+  deriveShippingZone,
+  getBoxSize,
+  isBoxOfferedInZone,
+  priceForZone,
   typicalBoxKg,
   whatsappLink,
   type PersonalMode,
@@ -59,8 +64,57 @@ export default function PersonalCalculator({
     LOWEST_DUTY_CATEGORY.id,
   ]);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
+  // Country defaults to Germany — most visitors to a Berlin-based
+  // forwarder's site are shipping from Germany, so this is the common
+  // case, not an assumption of the cheapest outcome (see below). City
+  // starts empty, which — deliberately — prices as `domestic-dhl`, not
+  // `pickup`: we don't yet know the customer is in Berlin/Brandenburg, so
+  // the calculator shouldn't assume its cheapest zone before they've
+  // actually said where they are. The country itself is a real dropdown
+  // (EU_COUNTRIES), not free text — city stays free text, matched
+  // internally against a Berlin/Brandenburg place list the customer never
+  // sees (see isBerlinBrandenburgCity in pricing.ts).
+  const [countryId, setCountryId] = useState(GERMANY_COUNTRY_ID);
+  const [city, setCity] = useState("");
 
   const byBoxes = mode === "boxes";
+  const zone = useMemo(
+    () => deriveShippingZone(countryId, city),
+    [countryId, city],
+  );
+  const isGermany = countryId === GERMANY_COUNTRY_ID;
+
+  // XXL doesn't fit DHL's weight cap on either DHL zone (see BOX_SIZES in
+  // pricing.ts). Both fields below that can move the zone away from
+  // `pickup` call this right alongside their own setState, so an existing
+  // XXL count is dropped in the same keystroke/selection rather than
+  // lingering into a render where it can no longer actually ship this way.
+  const dropXxlIfNotOffered = (nextZone: typeof zone) => {
+    if (isBoxOfferedInZone(getBoxSize("XXL"), nextZone)) return;
+    setBoxCounts((counts) => (counts.XXL ? { ...counts, XXL: 0 } : counts));
+  };
+  const changeCountryId = (value: string) => {
+    setCountryId(value);
+    dropXxlIfNotOffered(deriveShippingZone(value, city));
+  };
+  const changeCity = (value: string) => {
+    setCity(value);
+    dropXxlIfNotOffered(deriveShippingZone(countryId, value));
+  };
+
+  // Alphabetised by each locale's own country names, not the fixed id
+  // order EU_COUNTRIES happens to be declared in — an Arabic speaker
+  // shouldn't have to scan a list ordered for English.
+  const sortedCountries = useMemo(
+    () =>
+      [...EU_COUNTRIES].sort((a, b) =>
+        dict.personalCalculator.euCountryNames[a.id].localeCompare(
+          dict.personalCalculator.euCountryNames[b.id],
+          locale,
+        ),
+      ),
+    [dict, locale],
+  );
 
   // One line per size that actually has a count, in BOX_SIZES order — a
   // mixed cart is just these summed, each size keeping its own flat price
@@ -104,11 +158,12 @@ export default function PersonalCalculator({
           boxCounts,
           weightKg: weight,
           categoryId: effectiveCategoryId,
+          zone,
         },
         dict,
         locale,
       ),
-    [mode, boxCounts, weight, effectiveCategoryId, dict, locale],
+    [mode, boxCounts, weight, effectiveCategoryId, zone, dict, locale],
   );
 
   const summary = byBoxes
@@ -174,6 +229,61 @@ export default function PersonalCalculator({
               </div>
             </div>
 
+            {/* ---- Where it ships from. Decides the shipping zone (pickup /
+                   domestic-DHL / EU-DHL), which is what makes a box's price
+                   below zone-dependent rather than one flat number — see
+                   deriveShippingZone in pricing.ts. Sits ahead of the
+                   box-size section because it changes what that section can
+                   even offer (XXL disables outside the pickup zone), and it
+                   also feeds the per-kilo mode's box-price comparison, so it
+                   isn't gated behind `byBoxes`.
+
+                   Two fields, both real inputs: country is a dropdown (a
+                   fixed, correct list beats free text nobody can mistype),
+                   city is plain text. There is no third "region" control —
+                   the country → state/place table that resolves a typed
+                   city to Berlin/Brandenburg (see isBerlinBrandenburgCity
+                   in pricing.ts) is internal; the customer only ever sees
+                   these two fields. */}
+            <div>
+              <label htmlFor="ship-from-country" className="text-sm font-semibold">
+                {t.shippingFrom}
+              </label>
+              <select
+                id="ship-from-country"
+                autoComplete="country"
+                value={countryId}
+                onChange={(e) => changeCountryId(e.target.value)}
+                className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
+              >
+                {sortedCountries.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {dict.personalCalculator.euCountryNames[c.id]}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-3">
+                <label htmlFor="ship-from-city" className="text-sm font-semibold">
+                  {t.city}
+                </label>
+                <input
+                  id="ship-from-city"
+                  type="text"
+                  autoComplete="address-level2"
+                  value={city}
+                  onChange={(e) => changeCity(e.target.value)}
+                  placeholder={t.cityPlaceholder}
+                  className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
+                />
+                {isGermany && (
+                  <p className="mt-2 text-xs text-muted">
+                    {zone === "pickup" ? t.pickupZoneNote : t.dhlZoneNote}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {byBoxes ? (
               <>
                 {/* ---- Box size and how many — one combined choice. Each
@@ -188,31 +298,40 @@ export default function PersonalCalculator({
                   <div className="mt-4 space-y-2">
                     {BOX_SIZES.map((b) => {
                       const count = boxCounts[b.id] ?? 0;
+                      const priceInZone = priceForZone(b, zone);
+                      const offered = priceInZone !== null;
                       return (
                         <div
                           key={b.id}
                           className={`flex items-center gap-4 rounded-xl border p-3 sm:p-4 ${
-                            count > 0
-                              ? "border-fg/30 bg-bg-alt shadow-sm"
-                              : "border-line"
+                            !offered
+                              ? "border-line opacity-55"
+                              : count > 0
+                                ? "border-fg/30 bg-bg-alt shadow-sm"
+                                : "border-line"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-baseline gap-x-2">
                               <span className="display text-xl">{b.label}</span>
                               <span className="text-sm font-semibold tabular-nums">
-                                {eur(b.priceEur, locale)}
+                                {offered ? eur(priceInZone, locale) : "—"}
                               </span>
                             </span>
-                            <span className="mt-1 hidden text-[0.7rem] leading-snug text-muted sm:block">
+                            <span className="mt-1 block text-[0.7rem] leading-snug text-muted">
                               {boxDims(b)} · {t.holdsAbout(typicalBoxKg(b))}
                             </span>
+                            {!offered && (
+                              <span className="mt-1 block text-[0.7rem] leading-snug text-accent">
+                                {t.xxlPickupOnly}
+                              </span>
+                            )}
                           </div>
                           <QuantityStepper
                             label={b.label}
                             count={count}
                             onChange={(n) => setCount(b.id, n)}
-                            canIncrement={totalBoxCount < MAX_PERSONAL_BOXES}
+                            canIncrement={offered && totalBoxCount < MAX_PERSONAL_BOXES}
                             canDecrement={
                               count > 0 && !(count === 1 && totalBoxCount === 1)
                             }
@@ -342,7 +461,7 @@ export default function PersonalCalculator({
                 aria-expanded={categoriesExpanded}
                 aria-controls="whats-in-it-list"
                 onClick={() => setCategoriesExpanded((v) => !v)}
-                className="mt-4 text-sm font-semibold text-accent underline-offset-4 hover:underline"
+                className="mt-4 rounded-full border border-line bg-bg-alt px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent/50"
               >
                 {categoriesExpanded
                   ? t.doneChoosing
