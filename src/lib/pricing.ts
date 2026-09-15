@@ -149,97 +149,23 @@ export type PersonalMode = "boxes" | "perkg";
  * `pickup` — Berlin/Brandenburg, we collect it, no DHL leg at all.
  * `domestic-dhl` — rest of Germany, customer ships to us via DHL Paket.
  * `eu-dhl` — rest of the EU, customer ships to us via DHL Paket International.
- * Derived from the country dropdown (see EU_COUNTRIES in euCountries.ts)
- * plus, for Germany, a free-text city field — see `deriveShippingZone`.
+ * Derived from the country dropdown plus, for Germany, the state dropdown
+ * (both real `<select>` lists sourced from EU_COUNTRIES in
+ * euCountries.ts — no free text, no matching) — see `deriveShippingZone`.
  */
 export type ShippingZone = "pickup" | "domestic-dhl" | "eu-dhl";
 
-/**
- * Berlin (the city itself, plus its well-known boroughs) and Brandenburg's
- * larger towns, normalised (lowercase, umlauts folded to their plain-ASCII
- * spelling) for matching against whatever the customer types in the city
- * field. This is necessarily incomplete — Brandenburg alone has hundreds
- * of municipalities — so it is best-effort, same tolerance as every other
- * commercial-model number in this file: a real Brandenburg town that
- * isn't listed here falls through to `domestic-dhl`, the safer default
- * (see the comment on the DE default in PersonalCalculator.tsx), not a
- * wrong price in the cheap direction.
- */
-const BERLIN_BRANDENBURG_PLACES = new Set([
-  // Berlin + well-known boroughs
-  "berlin",
-  "mitte",
-  "kreuzberg",
-  "friedrichshain",
-  "charlottenburg",
-  "wilmersdorf",
-  "schoneberg",
-  "tempelhof",
-  "neukolln",
-  "spandau",
-  "steglitz",
-  "zehlendorf",
-  "pankow",
-  "prenzlauer berg",
-  "reinickendorf",
-  "marzahn",
-  "hellersdorf",
-  "lichtenberg",
-  "treptow",
-  "kopenick",
-  // Brandenburg's larger towns
-  "potsdam",
-  "cottbus",
-  "brandenburg an der havel",
-  "frankfurt (oder)",
-  "frankfurt an der oder",
-  "oranienburg",
-  "eberswalde",
-  "bernau",
-  "bernau bei berlin",
-  "falkensee",
-  "neuruppin",
-  "konigs wusterhausen",
-  "teltow",
-  "furstenwalde",
-  "rathenow",
-  "wittenberge",
-  "schwedt",
-  "luckenwalde",
-  "senftenberg",
-  "spremberg",
-  "finsterwalde",
-  "prenzlau",
-  "wittstock",
-  "strausberg",
-  "hennigsdorf",
-  "bad freienwalde",
-  "nauen",
-  "zossen",
-  "werder",
-  "ludwigsfelde",
-]);
+const BERLIN_BRANDENBURG_STATES = new Set(["Berlin", "Brandenburg"]);
 
-/** Lowercase + fold German umlauts/ß to their plain-ASCII spelling, so
-    "Königs Wusterhausen" and "konigs wusterhausen" match the same entry. */
-const normalizePlaceName = (s: string) =>
-  s
-    .trim()
-    .toLowerCase()
-    .replace(/ä/g, "a")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ß/g, "ss");
-
-export const isBerlinBrandenburgCity = (city: string) =>
-  BERLIN_BRANDENBURG_PLACES.has(normalizePlaceName(city));
+export const isBerlinBrandenburgState = (state: string) =>
+  BERLIN_BRANDENBURG_STATES.has(state);
 
 export function deriveShippingZone(
   countryId: string,
-  city: string,
+  state: string,
 ): ShippingZone {
   if (countryId !== GERMANY_COUNTRY_ID) return "eu-dhl";
-  return isBerlinBrandenburgCity(city) ? "pickup" : "domestic-dhl";
+  return isBerlinBrandenburgState(state) ? "pickup" : "domestic-dhl";
 }
 
 export interface BoxSize {

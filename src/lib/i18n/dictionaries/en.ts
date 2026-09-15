@@ -318,8 +318,8 @@ const en: Dictionary = {
       ES: "Spain",
       SE: "Sweden",
     },
-    city: "City",
-    cityPlaceholder: "e.g. Berlin",
+    state: "State",
+    selectState: "Select a state",
     pickupZoneNote:
       "That's Berlin/Brandenburg — we collect it ourselves, no DHL leg.",
     dhlZoneNote:

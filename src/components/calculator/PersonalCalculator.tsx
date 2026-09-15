@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
-import { EU_COUNTRIES, GERMANY_COUNTRY_ID } from "@/lib/euCountries";
+import { EU_COUNTRIES, GERMANY_COUNTRY_ID, getEuCountry } from "@/lib/euCountries";
 import {
   BOX_SIZES,
   CARGO_CATEGORIES,
@@ -66,39 +66,44 @@ export default function PersonalCalculator({
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   // Country defaults to Germany — most visitors to a Berlin-based
   // forwarder's site are shipping from Germany, so this is the common
-  // case, not an assumption of the cheapest outcome (see below). City
-  // starts empty, which — deliberately — prices as `domestic-dhl`, not
-  // `pickup`: we don't yet know the customer is in Berlin/Brandenburg, so
-  // the calculator shouldn't assume its cheapest zone before they've
-  // actually said where they are. The country itself is a real dropdown
-  // (EU_COUNTRIES), not free text — city stays free text, matched
-  // internally against a Berlin/Brandenburg place list the customer never
-  // sees (see isBerlinBrandenburgCity in pricing.ts).
+  // case, not an assumption of the cheapest outcome (see below). State
+  // starts unselected (""), which — deliberately — prices as
+  // `domestic-dhl`, not `pickup`: we don't yet know the customer is in
+  // Berlin/Brandenburg, so the calculator shouldn't assume its cheapest
+  // zone before they've actually said where they are. Both fields are
+  // real `<select>` dropdowns sourced from EU_COUNTRIES in
+  // euCountries.ts — no free text, no matching, so there is nothing to
+  // mistype or misspell.
   const [countryId, setCountryId] = useState(GERMANY_COUNTRY_ID);
-  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
 
   const byBoxes = mode === "boxes";
   const zone = useMemo(
-    () => deriveShippingZone(countryId, city),
-    [countryId, city],
+    () => deriveShippingZone(countryId, state),
+    [countryId, state],
   );
   const isGermany = countryId === GERMANY_COUNTRY_ID;
+  const statesForCountry = getEuCountry(countryId)?.states ?? [];
 
   // XXL doesn't fit DHL's weight cap on either DHL zone (see BOX_SIZES in
-  // pricing.ts). Both fields below that can move the zone away from
+  // pricing.ts). Both dropdowns below that can move the zone away from
   // `pickup` call this right alongside their own setState, so an existing
-  // XXL count is dropped in the same keystroke/selection rather than
-  // lingering into a render where it can no longer actually ship this way.
+  // XXL count is dropped in the same selection rather than lingering into
+  // a render where it can no longer actually ship this way.
   const dropXxlIfNotOffered = (nextZone: typeof zone) => {
     if (isBoxOfferedInZone(getBoxSize("XXL"), nextZone)) return;
     setBoxCounts((counts) => (counts.XXL ? { ...counts, XXL: 0 } : counts));
   };
   const changeCountryId = (value: string) => {
     setCountryId(value);
-    dropXxlIfNotOffered(deriveShippingZone(value, city));
+    // A state picked under the previous country isn't valid for the new
+    // one (the two countries' lists don't share entries), so it resets to
+    // unselected rather than silently carrying over a foreign state name.
+    setState("");
+    dropXxlIfNotOffered(deriveShippingZone(value, ""));
   };
-  const changeCity = (value: string) => {
-    setCity(value);
+  const changeState = (value: string) => {
+    setState(value);
     dropXxlIfNotOffered(deriveShippingZone(countryId, value));
   };
 
@@ -238,13 +243,11 @@ export default function PersonalCalculator({
                    also feeds the per-kilo mode's box-price comparison, so it
                    isn't gated behind `byBoxes`.
 
-                   Two fields, both real inputs: country is a dropdown (a
-                   fixed, correct list beats free text nobody can mistype),
-                   city is plain text. There is no third "region" control —
-                   the country → state/place table that resolves a typed
-                   city to Berlin/Brandenburg (see isBerlinBrandenburgCity
-                   in pricing.ts) is internal; the customer only ever sees
-                   these two fields. */}
+                   Two cascading dropdowns, both real selections — no free
+                   text anywhere, so there is nothing to mistype or
+                   misspell. Country picks from EU_COUNTRIES; state repopulates
+                   from that country's own state list (euCountries.ts) and
+                   resets whenever the country changes. */}
             <div>
               <label htmlFor="ship-from-country" className="text-sm font-semibold">
                 {t.shippingFrom}
@@ -264,18 +267,23 @@ export default function PersonalCalculator({
               </select>
 
               <div className="mt-3">
-                <label htmlFor="ship-from-city" className="text-sm font-semibold">
-                  {t.city}
+                <label htmlFor="ship-from-state" className="text-sm font-semibold">
+                  {t.state}
                 </label>
-                <input
-                  id="ship-from-city"
-                  type="text"
-                  autoComplete="address-level2"
-                  value={city}
-                  onChange={(e) => changeCity(e.target.value)}
-                  placeholder={t.cityPlaceholder}
+                <select
+                  id="ship-from-state"
+                  autoComplete="address-level1"
+                  value={state}
+                  onChange={(e) => changeState(e.target.value)}
                   className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
-                />
+                >
+                  <option value="">{t.selectState}</option>
+                  {statesForCountry.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
                 {isGermany && (
                   <p className="mt-2 text-xs text-muted">
                     {zone === "pickup" ? t.pickupZoneNote : t.dhlZoneNote}

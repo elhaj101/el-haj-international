@@ -265,22 +265,24 @@ export interface Dictionary {
     byTheBox: string;
     byTheKilo: (perKg: string) => string;
     /** "Where are you shipping from?" — label for the country dropdown,
-        decides the shipping zone together with city below. */
+        decides the shipping zone together with state below. */
     shippingFrom: string;
     /** Display names for euCountries.ts's EU_COUNTRIES list, keyed by
         country id (ISO 3166-1 alpha-2) — every id in that file must have
         an entry here, in every locale. */
     euCountryNames: Record<string, string>;
-    /** Free-text city field, shown only once the country dropdown resolves
-        to Germany — matched against a Berlin/Brandenburg place list (see
-        isBerlinBrandenburgCity in pricing.ts) to decide pickup vs
-        domestic-DHL pricing; never shown to the customer as a list. */
-    city: string;
-    cityPlaceholder: string;
-    /** Status line under the city field once it resolves to the pickup
+    /** State dropdown, repopulated from the selected country's own state
+        list (euCountries.ts) — for Germany this decides pickup vs
+        domestic-DHL pricing (see isBerlinBrandenburgState in pricing.ts).
+        State names themselves are not localized — see the comment atop
+        euCountries.ts for why. */
+    state: string;
+    /** Disabled placeholder option shown before a state is picked. */
+    selectState: string;
+    /** Status line under the state field once it resolves to the pickup
         zone (Berlin/Brandenburg). */
     pickupZoneNote: string;
-    /** Same, for a German city outside Berlin/Brandenburg. */
+    /** Same, for a German state outside Berlin/Brandenburg. */
     dhlZoneNote: string;
     /** Shown next to the XXL box row outside the pickup zone — it cannot
         ship there at all, see BOX_SIZES in pricing.ts. */

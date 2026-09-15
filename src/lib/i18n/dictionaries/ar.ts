@@ -338,8 +338,8 @@ const ar: Dictionary = {
       ES: "إسبانيا",
       SE: "السويد",
     },
-    city: "المدينة",
-    cityPlaceholder: "مثلاً برلين",
+    state: "المنطقة",
+    selectState: "اختر المنطقة",
     pickupZoneNote:
       "هذا ضمن برلين/براندنبورغ — سنستلمها بأنفسنا، دون شحن عبر DHL.",
     dhlZoneNote:
