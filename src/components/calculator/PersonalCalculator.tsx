@@ -604,8 +604,24 @@ function PersonalResult({
       {/* The split matters more than the total: one half is our price and
           is fixed, the other is a foreign government's charge that we
           neither set nor collect. Running them together as one number
-          would imply we control both. */}
+          would imply we control both. Shipping itself breaks down further
+          whenever a DHL leg is actually in it (i.e. outside the pickup
+          zone) — full cost pass-through, so the customer can see exactly
+          what's the flat box price and what's DHL's own rate, not one
+          folded number. */}
       <dl className="mt-6 space-y-3 border-t border-line pt-5 text-sm">
+        {quote.dhlEur > 0 && (
+          <>
+            <div className="flex items-center justify-between gap-4 ps-3 text-xs">
+              <dt className="text-muted">{t.boxPriceLabel}</dt>
+              <dd className="tabular-nums text-muted">{eur(quote.boxBaseEur, locale)}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4 ps-3 text-xs">
+              <dt className="text-muted">{t.dhlLabel}</dt>
+              <dd className="tabular-nums text-muted">{eur(quote.dhlEur, locale)}</dd>
+            </div>
+          </>
+        )}
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted">{t.shippingYouPayUs}</dt>
           <dd className="font-semibold tabular-nums">{eur(quote.shippingEur, locale)}</dd>

@@ -358,6 +358,8 @@ const en: Dictionary = {
     checkThisWithUs: "Check this with us",
     check: "Check",
     estimatedAllIn: "estimated all-in",
+    boxPriceLabel: "Box price",
+    dhlLabel: "DHL shipping",
     shippingYouPayUs: "Shipping — you pay us",
     dutyMayCharge: "Duty — customs may charge on arrival",
     customsFinalAssessment: "Customs make the final assessment, not us.",

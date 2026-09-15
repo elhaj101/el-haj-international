@@ -324,6 +324,12 @@ export interface Dictionary {
     checkThisWithUs: string;
     check: string;
     estimatedAllIn: string;
+    /** Sub-line under shippingYouPayUs, shown only when dhlLabel's amount
+        is non-zero (i.e. outside the pickup zone) — the flat box price
+        before the DHL leg is added. */
+    boxPriceLabel: string;
+    /** Same breakdown, the DHL amount itself (full cost pass-through). */
+    dhlLabel: string;
     shippingYouPayUs: string;
     dutyMayCharge: string;
     customsFinalAssessment: string;

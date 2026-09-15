@@ -296,6 +296,20 @@ export interface PersonalQuoteInput {
 export interface PersonalQuote {
   /** What the customer pays us. Flat and exact — never a range. */
   shippingEur: number;
+  /**
+   * The box price before any DHL leg — i.e. what the same boxes cost in
+   * the `pickup` zone. `shippingEur - dhlEur`, always. In per-kilo mode
+   * this just equals shippingEur, since PERSONAL_PER_KG_EUR doesn't vary
+   * by zone (see BOX_SIZES / deriveShippingZone in this file) — there is
+   * no DHL leg to split out of a per-kilo quote.
+   */
+  boxBaseEur: number;
+  /**
+   * The real DHL cost folded into shippingEur — zero in the `pickup` zone
+   * (no DHL leg at all) and always zero in per-kilo mode. Full cost
+   * pass-through: this is Deutsche Post/DHL's own rate, not marked up.
+   */
+  dhlEur: number;
   /** The parcel's weight, actual or implied. The duty base. */
   weightKg: number;
   /** What Lebanese customs may assess on arrival. NOT paid to us. */
@@ -409,6 +423,12 @@ export function calculatePersonalQuote(
         0,
       ),
     );
+    // Same sum at the pickup-zone price — the DHL amount is just the gap
+    // between what these boxes cost picked up versus shipped to us.
+    const boxBaseEur = round(
+      lines.reduce((sum, l) => sum + l.count * l.box.pricesByZone.pickup, 0),
+    );
+    const dhlEur = round(shippingEur - boxBaseEur);
     const weightKg = lines.reduce(
       (sum, l) => sum + l.count * typicalBoxKg(l.box),
       0,
@@ -464,6 +484,8 @@ export function calculatePersonalQuote(
 
     return {
       shippingEur,
+      boxBaseEur,
+      dhlEur,
       weightKg,
       dutyEur,
       totalEur: round(shippingEur + dutyEur),
@@ -497,6 +519,10 @@ export function calculatePersonalQuote(
 
   return {
     shippingEur,
+    // No DHL leg to split out here — PERSONAL_PER_KG_EUR is flat
+    // regardless of zone, see the field comment on PersonalQuote.
+    boxBaseEur: shippingEur,
+    dhlEur: 0,
     weightKg,
     dutyEur,
     totalEur: round(shippingEur + dutyEur),

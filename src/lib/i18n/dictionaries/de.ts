@@ -361,6 +361,8 @@ const de: Dictionary = {
     checkThisWithUs: "Bei uns nachfragen",
     check: "Nachfragen",
     estimatedAllIn: "geschätzt, alles inklusive",
+    boxPriceLabel: "Kartonpreis",
+    dhlLabel: "DHL-Versand",
     shippingYouPayUs: "Versand — Sie zahlen an uns",
     dutyMayCharge: "Zoll — vom Zoll bei Ankunft möglicherweise erhoben",
     customsFinalAssessment: "Die endgültige Festsetzung erfolgt durch den Zoll, nicht durch uns.",

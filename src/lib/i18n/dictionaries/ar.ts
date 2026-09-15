@@ -377,6 +377,8 @@ const ar: Dictionary = {
     checkThisWithUs: "استفسر عن هذا التقدير",
     check: "استفسر",
     estimatedAllIn: "تقدير شامل كل الكلفة",
+    boxPriceLabel: "سعر الكرتونة",
+    dhlLabel: "شحن DHL",
     shippingYouPayUs: "الشحن — تدفعه لنا",
     dutyMayCharge: "الرسوم الجمركية — قد يفرضها الجمرك عند الوصول",
     customsFinalAssessment: "الجمرك هو من يحدّد التقييم النهائي، لا نحن.",
