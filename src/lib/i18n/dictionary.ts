@@ -330,10 +330,14 @@ export interface Dictionary {
     check: string;
     estimatedAllIn: string;
     /** Sub-line under shippingYouPayUs, shown only when dhlLabel's amount
-        is non-zero (i.e. outside the pickup zone) — the flat box price
-        before the DHL leg is added. */
-    boxPriceLabel: string;
-    /** Same breakdown, the DHL amount itself (full cost pass-through). */
+        is non-zero (i.e. outside the pickup zone) — the flat pickup-zone
+        price (box or per-kilo, whichever mode is active) before the DHL
+        leg is added. Mode-neutral on purpose — see basePriceLabel's
+        rename from the old boxPriceLabel. */
+    basePriceLabel: string;
+    /** Same breakdown, the DHL amount itself — full cost pass-through in
+        boxes mode, an approximation in per-kilo mode (see
+        personalPerKgRateForZone in pricing.ts). */
     dhlLabel: string;
     shippingYouPayUs: string;
     dutyMayCharge: string;

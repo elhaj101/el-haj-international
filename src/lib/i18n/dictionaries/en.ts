@@ -323,9 +323,9 @@ const en: Dictionary = {
     pickupZoneNote:
       "That's Berlin/Brandenburg — we collect it ourselves, no DHL leg.",
     dhlZoneNote:
-      "Outside Berlin/Brandenburg — you ship this to us via DHL, already priced into the box price below.",
+      "Outside Berlin/Brandenburg — you ship this to us via DHL, already priced into the total below.",
     euDhlApproximationNote:
-      "The DHL cost folded into the box price below is Deutsche Post's own rate for the reverse direction (Germany to your country) — a close stand-in, not a rate sourced for this exact corridor.",
+      "The DHL cost folded into the price below is Deutsche Post's own rate for the reverse direction (Germany to your country) — a close stand-in, not a rate sourced for this exact corridor.",
     xxlPickupOnly:
       "Only available for Berlin/Brandenburg pickup — too heavy for standard DHL Paket.",
     boxSize: "Box size",
@@ -360,7 +360,7 @@ const en: Dictionary = {
     checkThisWithUs: "Check this with us",
     check: "Check",
     estimatedAllIn: "estimated all-in",
-    boxPriceLabel: "Box price",
+    basePriceLabel: "Base price",
     dhlLabel: "DHL shipping",
     shippingYouPayUs: "Shipping — you pay us",
     dutyMayCharge: "Duty — customs may charge on arrival",

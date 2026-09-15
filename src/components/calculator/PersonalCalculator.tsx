@@ -11,13 +11,13 @@ import {
   CUSTOMS_DATA_AS_OF,
   LOWEST_DUTY_CATEGORY,
   MAX_PERSONAL_BOXES,
-  PERSONAL_PER_KG_EUR,
   SMALLEST_BOX_SIZE,
   boxDims,
   calculatePersonalQuote,
   deriveShippingZone,
   getBoxSize,
   isBoxOfferedInZone,
+  personalPerKgRateForZone,
   priceForZone,
   typicalBoxKg,
   whatsappLink,
@@ -233,7 +233,7 @@ export default function PersonalCalculator({
                       : "border-line text-muted hover:border-fg/25"
                   }`}
                 >
-                  {t.byTheKilo(eur(PERSONAL_PER_KG_EUR, locale))}
+                  {t.byTheKilo(eur(personalPerKgRateForZone(zone), locale))}
                 </button>
               </div>
             </div>
@@ -424,7 +424,7 @@ export default function PersonalCalculator({
                   <span>{t.kgUnit(300)}</span>
                 </div>
                 <p className="mt-3 text-xs text-muted">
-                  {t.chargedOnActualWeight(eur(PERSONAL_PER_KG_EUR, locale))}
+                  {t.chargedOnActualWeight(eur(personalPerKgRateForZone(zone), locale))}
                 </p>
               </div>
             )}
@@ -620,22 +620,39 @@ function PersonalResult({
           neither set nor collect. Running them together as one number
           would imply we control both. Shipping itself breaks down further
           whenever a DHL leg is actually in it (i.e. outside the pickup
-          zone) — full cost pass-through, so the customer can see exactly
-          what's the flat box price and what's DHL's own rate, not one
-          folded number. */}
+          zone, in *either* pricing mode — see personalPerKgRateForZone in
+          pricing.ts) — full cost pass-through in boxes mode, an
+          approximation in per-kilo mode, so the customer can see exactly
+          what's the flat base price and what's DHL's own rate, not one
+          folded number.
+
+          eur() always rounds to whole euros (see format.ts), and in boxes
+          mode the base price was always already whole, so rounding each
+          line independently never drifted from the rounded total. Per-kilo
+          mode's base price usually isn't whole (e.g. 5 kg × €2.50), so
+          rounding base and DHL separately can be off by a euro from the
+          rounded total (€13 + €8 shown against a €20 total). Deriving the
+          displayed DHL amount as rounded-total minus rounded-base instead
+          of rounding the raw amount fixes that by construction, in both
+          modes. */}
       <dl className="mt-6 space-y-3 border-t border-line pt-5 text-sm">
-        {quote.dhlEur > 0 && (
-          <>
-            <div className="flex items-center justify-between gap-4 ps-3 text-xs">
-              <dt className="text-muted">{t.boxPriceLabel}</dt>
-              <dd className="tabular-nums text-muted">{eur(quote.boxBaseEur, locale)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4 ps-3 text-xs">
-              <dt className="text-muted">{t.dhlLabel}</dt>
-              <dd className="tabular-nums text-muted">{eur(quote.dhlEur, locale)}</dd>
-            </div>
-          </>
-        )}
+        {quote.dhlEur > 0 && (() => {
+          const roundedTotal = Math.round(quote.shippingEur);
+          const roundedBase = Math.round(quote.boxBaseEur);
+          const roundedDhl = roundedTotal - roundedBase;
+          return (
+            <>
+              <div className="flex items-center justify-between gap-4 ps-3 text-xs">
+                <dt className="text-muted">{t.basePriceLabel}</dt>
+                <dd className="tabular-nums text-muted">{eur(roundedBase, locale)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 ps-3 text-xs">
+                <dt className="text-muted">{t.dhlLabel}</dt>
+                <dd className="tabular-nums text-muted">{eur(roundedDhl, locale)}</dd>
+              </div>
+            </>
+          );
+        })()}
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted">{t.shippingYouPayUs}</dt>
           <dd className="font-semibold tabular-nums">{eur(quote.shippingEur, locale)}</dd>

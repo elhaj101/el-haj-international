@@ -277,6 +277,37 @@ export const TYPICAL_DENSITY_KG_PER_M3 = 320;
 export const typicalBoxKg = (box: BoxSize) =>
   Math.round(box.volumeM3 * TYPICAL_DENSITY_KG_PER_M3);
 
+/**
+ * Real DHL Paket cost per kilo, outside the pickup zone — the same "full
+ * cost pass-through" treatment BOX_SIZES.pricesByZone gets, applied to
+ * the flat per-kilo rate instead of a box price. Derived, not separately
+ * sourced: DHL prices per *parcel*, not linearly per kilo, so this takes
+ * the smallest box's own real DHL delta (see BOX_SIZES) and divides by
+ * its typical weight — the same reference box the per-kilo "what would
+ * boxes cost instead" comparison already benchmarks against below. An
+ * approximation, flagged as one rather than presented as a sourced rate;
+ * a shipment packed denser or looser than that reference box would see a
+ * different real DHL cost per kilo than this.
+ */
+const PERSONAL_PER_KG_DHL_SURCHARGE: Record<"domestic-dhl" | "eu-dhl", number> = {
+  "domestic-dhl": round(
+    ((priceForZone(SMALLEST_BOX_SIZE, "domestic-dhl") ?? SMALLEST_BOX_SIZE.pricesByZone.pickup) -
+      SMALLEST_BOX_SIZE.pricesByZone.pickup) /
+      typicalBoxKg(SMALLEST_BOX_SIZE),
+  ),
+  "eu-dhl": round(
+    ((priceForZone(SMALLEST_BOX_SIZE, "eu-dhl") ?? SMALLEST_BOX_SIZE.pricesByZone.pickup) -
+      SMALLEST_BOX_SIZE.pricesByZone.pickup) /
+      typicalBoxKg(SMALLEST_BOX_SIZE),
+  ),
+};
+
+/** PERSONAL_PER_KG_EUR, adjusted for the DHL leg outside the pickup zone. */
+export const personalPerKgRateForZone = (zone: ShippingZone): number =>
+  zone === "pickup"
+    ? PERSONAL_PER_KG_EUR
+    : round(PERSONAL_PER_KG_EUR + PERSONAL_PER_KG_DHL_SURCHARGE[zone]);
+
 export interface PersonalQuoteInput {
   mode: PersonalMode;
   /**
@@ -297,17 +328,19 @@ export interface PersonalQuote {
   /** What the customer pays us. Flat and exact — never a range. */
   shippingEur: number;
   /**
-   * The box price before any DHL leg — i.e. what the same boxes cost in
-   * the `pickup` zone. `shippingEur - dhlEur`, always. In per-kilo mode
-   * this just equals shippingEur, since PERSONAL_PER_KG_EUR doesn't vary
-   * by zone (see BOX_SIZES / deriveShippingZone in this file) — there is
-   * no DHL leg to split out of a per-kilo quote.
+   * The price before any DHL leg — what the same boxes, or the same
+   * weight at the flat per-kilo rate, cost in the `pickup` zone.
+   * `shippingEur - dhlEur`, always, in both modes — see BOX_SIZES and
+   * personalPerKgRateForZone in this file for how each mode prices the
+   * DHL leg on top of this.
    */
   boxBaseEur: number;
   /**
-   * The real DHL cost folded into shippingEur — zero in the `pickup` zone
-   * (no DHL leg at all) and always zero in per-kilo mode. Full cost
-   * pass-through: this is Deutsche Post/DHL's own rate, not marked up.
+   * The DHL cost folded into shippingEur — zero in the `pickup` zone (no
+   * DHL leg at all), in both modes. Full cost pass-through in boxes mode
+   * (Deutsche Post/DHL's own per-box rate, not marked up); an
+   * approximation in per-kilo mode (see personalPerKgRateForZone) since
+   * DHL prices per parcel, not linearly per kilo.
    */
   dhlEur: number;
   /** The parcel's weight, actual or implied. The duty base. */
@@ -442,8 +475,11 @@ export function calculatePersonalQuote(
       locale,
     );
 
-    // What the same parcel would cost per kilo.
-    const alternativeEur = round(weightKg * PERSONAL_PER_KG_EUR);
+    // What the same parcel would cost per kilo, at this same zone's
+    // per-kilo rate — both pricing modes now carry the same DHL leg
+    // outside the pickup zone, so the comparison stays apples-to-apples.
+    const perKgRateForComparison = personalPerKgRateForZone(input.zone);
+    const alternativeEur = round(weightKg * perKgRateForComparison);
 
     // A single size (the common case, including the empty-cart default)
     // keeps the specific "N × size at €X each" phrasing; more than one
@@ -473,13 +509,13 @@ export function calculatePersonalQuote(
           numBoxes: only.count,
           weightKg,
           altEur: eur(alternativeEur, locale),
-          perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+          perKgEur: eur(perKgRateForComparison, locale),
         })
       : t.personalAlternativeFromMixedBoxes({
           totalBoxes,
           weightKg,
           altEur: eur(alternativeEur, locale),
-          perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+          perKgEur: eur(perKgRateForComparison, locale),
         });
 
     return {
@@ -497,7 +533,13 @@ export function calculatePersonalQuote(
   }
 
   const weightKg = Math.max(0, input.weightKg || 0);
-  const shippingEur = round(weightKg * PERSONAL_PER_KG_EUR);
+  const perKgRate = personalPerKgRateForZone(input.zone);
+  const shippingEur = round(weightKg * perKgRate);
+  // Same split as boxes mode: the flat pickup-zone rate is the base, the
+  // rest (zero in the pickup zone) is the DHL leg — see
+  // personalPerKgRateForZone above.
+  const boxBaseEur = round(weightKg * PERSONAL_PER_KG_EUR);
+  const dhlEur = round(shippingEur - boxBaseEur);
   const { dutyEur, dutyBasis } = personalDuty(
     weightKg,
     input.categoryId,
@@ -519,16 +561,14 @@ export function calculatePersonalQuote(
 
   return {
     shippingEur,
-    // No DHL leg to split out here — PERSONAL_PER_KG_EUR is flat
-    // regardless of zone, see the field comment on PersonalQuote.
-    boxBaseEur: shippingEur,
-    dhlEur: 0,
+    boxBaseEur,
+    dhlEur,
     weightKg,
     dutyEur,
     totalEur: round(shippingEur + dutyEur),
     basis: t.personalBasisPerKg({
       weightKg,
-      perKgEur: eur(PERSONAL_PER_KG_EUR, locale),
+      perKgEur: eur(perKgRate, locale),
     }),
     dutyBasis,
     alternativeEur,

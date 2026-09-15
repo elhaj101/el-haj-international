@@ -326,9 +326,9 @@ const de: Dictionary = {
     pickupZoneNote:
       "Das ist Berlin/Brandenburg — wir holen es selbst ab, kein DHL-Versand nötig.",
     dhlZoneNote:
-      "Außerhalb von Berlin/Brandenburg — Sie versenden dies per DHL an uns; die Kosten dafür sind bereits im Kartonpreis unten enthalten.",
+      "Außerhalb von Berlin/Brandenburg — Sie versenden dies per DHL an uns; die Kosten dafür sind bereits im Gesamtpreis unten enthalten.",
     euDhlApproximationNote:
-      "Die DHL-Kosten im Kartonpreis unten sind der eigene Tarif der Deutschen Post für die umgekehrte Richtung (Deutschland zu Ihrem Land) — eine nahe Annäherung, kein Tarif für genau diese Strecke.",
+      "Die DHL-Kosten im Preis unten sind der eigene Tarif der Deutschen Post für die umgekehrte Richtung (Deutschland zu Ihrem Land) — eine nahe Annäherung, kein Tarif für genau diese Strecke.",
     xxlPickupOnly:
       "Nur bei Abholung in Berlin/Brandenburg verfügbar — zu schwer für DHL-Standardpakete.",
     boxSize: "Kartongröße",
@@ -363,7 +363,7 @@ const de: Dictionary = {
     checkThisWithUs: "Bei uns nachfragen",
     check: "Nachfragen",
     estimatedAllIn: "geschätzt, alles inklusive",
-    boxPriceLabel: "Kartonpreis",
+    basePriceLabel: "Grundpreis",
     dhlLabel: "DHL-Versand",
     shippingYouPayUs: "Versandkosten — Sie zahlen sie an uns",
     dutyMayCharge: "Zollgebühr — bei Ankunft möglicherweise vom Zoll erhoben",
