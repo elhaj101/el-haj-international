@@ -4,13 +4,13 @@ const de: Dictionary = {
   meta: {
     title: "El Haj International — Versand & Handel",
     description:
-      "Versand und Handel zwischen Europa und dem Nahen Osten. Konsolidierte Containerfracht und Beschaffung.",
+      "Versand und Handel zwischen Europa und dem Nahen Osten. Fracht per Sammelcontainer und Beschaffung.",
   },
 
   nav: {
     howItWorks: "So funktioniert's",
     pricing: "Preise",
-    calculator: "Rechner",
+    calculator: "Versandrechner",
     signUp: "Registrieren",
     languageSwitcher: "Sprache wechseln",
   },
@@ -18,10 +18,10 @@ const de: Dictionary = {
   hero: {
     headlineLine1: "Alles versenden",
     headlineLine2: "von Europa",
-    headlineLine3Lead: "nach",
+    headlineLine3Lead: "in den",
     destinationName: "Libanon",
     subtitle: [
-      { text: "Konsolidierter Containerversand und Handel zwischen " },
+      { text: "Sammelcontainer-Versand und Handel zwischen " },
       {
         text: "Europa",
         strong: true,
@@ -47,7 +47,7 @@ const de: Dictionary = {
       { text: "dem Nahen Osten", strong: true },
       { text: "." },
     ],
-    chatWithUs: "Chatten Sie mit uns",
+    chatWithUs: "Schreiben Sie uns",
     chatWhatsappMessage:
       "Hallo, ich bin auf El Haj International gestoßen und habe eine Frage zum Versand.",
     estimateShipment: "Sendung schätzen",
@@ -81,8 +81,8 @@ const de: Dictionary = {
         body: "Anfrage-Button antippen und Ihre Angaben per WhatsApp schicken. Wir bestätigen den Endpreis.",
       },
       {
-        title: "Auf den Fahrer warten",
-        body: "Wir übernehmen Abholung, Versand und Zollabfertigung. Ihr Paket kommt an die Tür.",
+        title: "Auf unseren Fahrer warten",
+        body: "Wir übernehmen Abholung, Versand und Zollabfertigung. Ihr Paket kommt bis vor die Haustür.",
       },
     ],
     scrubberLabel: "Ziehen, um die Schritte erneut anzusehen",
@@ -92,7 +92,7 @@ const de: Dictionary = {
 
   calculatorPromo: {
     eyebrow: "Preise",
-    headline: "Kennen Sie den Preis, bevor Sie versenden.",
+    headline: "Erfahren Sie den Preis, bevor Sie versenden.",
     subtitle: "Fracht, Zoll und Gebühren — eine Schätzung, keine Verpflichtung.",
     openCalculator: "Rechner öffnen",
     personalTag: "Versand",
@@ -108,7 +108,7 @@ const de: Dictionary = {
     eyebrow: "Loslegen",
     headline: "Kundenservice und Beratung — kostenlos",
     subtitle:
-      "Keine Formulare und kein Konto nötig, um zu fragen. Schreiben Sie uns, und wir sagen Ihnen, was es kostet und was dazugehört.",
+      "Für eine Anfrage brauchen Sie weder Formular noch Konto. Schreiben Sie uns, und wir sagen Ihnen, was es kostet und was dazugehört.",
     personalParcelsLabel: "Private Pakete",
     personalParcelsMessage:
       "Hallo, ich möchte etwas von Europa in den Nahen Osten versenden.",
@@ -119,8 +119,8 @@ const de: Dictionary = {
 
   footer: {
     tagline:
-      "Konsolidierter Containerversand und Handel zwischen Europa und dem Nahen Osten. Sitz in Hamburg, Deutschland.",
-    calculator: "Rechner",
+      "Sammelcontainer-Versand und Handel zwischen Europa und dem Nahen Osten. Sitz in Hamburg.",
+    calculator: "Versandrechner",
     signUp: "Registrieren",
     devNotice:
       "Die Website befindet sich im Aufbau. El Haj International ist noch nicht als lizenziertes Speditionsunternehmen registriert — die gezeigten Preise sind unverbindlich, und es werden noch keine Buchungen angenommen.",
@@ -143,8 +143,8 @@ const de: Dictionary = {
       "Jedes Land besteuert Importe unterschiedlich, daher beginnt die Schätzung mit dem Zielland.",
     startEstimate: "Schätzung starten",
     onlyDestinationNotice:
-      "Libanon ist derzeit das einzige Ziel — nur für diese Route liegen uns vollständige Zolldaten vor. Ein weiteres Land hinzuzufügen bedeutet, dessen Zolltabellen sorgfältig zu recherchieren, nicht nur einen Eintrag in einer Liste.",
-    shippingToEyebrow: "Versand nach",
+      "Libanon ist derzeit das einzige Ziel — nur für diese Route liegen uns vollständige Zolldaten vor. Ein weiteres Land hinzuzufügen bedeutet, dessen Zolltabellen sorgfältig zu recherchieren — nicht einfach nur, es einer Liste hinzuzufügen.",
+    shippingToEyebrow: "Versand in den",
     change: "Ändern",
     profileTabsLabel: "Art der Sendung",
     personalTitle: "Privates Paket",
@@ -159,29 +159,29 @@ const de: Dictionary = {
 
   cargoCategories: {
     "used-household": {
-      label: "Gebrauchte Haushaltswaren",
+      label: "Hausrat (gebraucht)",
       blurb: "Möbel, Küchenutensilien, persönliche Gegenstände",
       caveat:
-        "Unterliegt in Libanon einer dreijährigen Weiterverkaufssperre. Nicht geeignet für die Wiederauffüllung eines Geschäfts.",
+        "Unterliegt im Libanon einer dreijährigen Weiterverkaufssperre. Nicht geeignet, um ein Ladengeschäft mit Ware aufzufüllen.",
     },
     "used-clothing": {
       label: "Gebrauchte Kleidung",
       blurb: "Getragene Kleidungsstücke und Textilien (HS 6309.00)",
       caveat:
-        "Für diese Position gilt eine „EC“-Behördenkontrolle, die wir nicht vollständig klären konnten — vor Versand größerer Mengen bei einem Zollmakler nachfragen.",
+        "Für diese Position gilt eine „EC”-Behördenkontrolle, die wir nicht vollständig klären konnten — vor Versand größerer Mengen bei einem Zollagenten nachfragen.",
     },
     "used-appliances": {
       label: "Haushaltsgeräte (gebraucht)",
       blurb: "Zollfrei mit den richtigen Unterlagen",
       caveat:
-        "FIDIs eigene Liste verbotener Gegenstände widerspricht dieser Angabe bei batteriebetriebenen und Haushaltsgeräten. Erfordert eine direkte Auskunft von einem Zollmakler.",
+        "FIDIs eigene Liste verbotener Gegenstände widerspricht dieser Angabe bei batteriebetriebenen Geräten und Haushaltsgeräten. Erfordert eine direkte Auskunft von einem Zollagenten.",
     },
     computers: {
       label: "Computer & Laptops",
       blurb: "Zollfrei — nur MwSt. und Sicherheitsgebühr",
     },
     apparel: {
-      label: "Kleidung & Bekleidung (neu)",
+      label: "Bekleidung (neu)",
       blurb: "Neue Kleidungsstücke",
     },
     phones: {
@@ -194,9 +194,9 @@ const de: Dictionary = {
     },
     shoes: {
       label: "Schuhe",
-      blurb: "Neues Schuhwerk",
+      blurb: "Neue Schuhe",
       caveat:
-        "Es gilt ein Mindestbetrag von 7.500 LL pro Paar, der bei günstigem Schuhwerk über dem prozentualen Zoll liegen kann.",
+        "Es gilt ein Mindestbetrag von 7.500 LL pro Paar, der bei günstigen Schuhen über dem prozentualen Zoll liegen kann.",
     },
     bags: {
       label: "Handtaschen & Gepäck",
@@ -205,15 +205,15 @@ const de: Dictionary = {
     },
     "appliances-new": {
       label: "Haushaltsgeräte (neu)",
-      blurb: "Weiße Ware und kleine Haushaltsgeräte",
+      blurb: "Weiße Ware und Elektrokleingeräte",
     },
     perfume: {
       label: "Parfüm",
-      blurb: "Parfüms und Toilettenwasser",
+      blurb: "Parfüms und Eau de Toilette",
     },
     cosmetics: {
       label: "Kosmetik & Make-up",
-      blurb: "Eine häufige Anfrage aus deutschen Drogerien",
+      blurb: "Wird oft in deutschen Drogerien gekauft",
     },
     linens: {
       label: "Bettwäsche & Handtücher",
@@ -234,7 +234,7 @@ const de: Dictionary = {
 
   pricingSentences: {
     personalDutyFree: ({ categoryLabel, securityFeePct, deemedEurPerKg, weightKg }) =>
-      `${categoryLabel} sind zollfrei — hier fällt nur die Sicherheitsgebühr von ${securityFeePct} an, auf einen unterstellten Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg.`,
+      `${categoryLabel} sind zollfrei — hier fällt nur die Sicherheitsgebühr von ${securityFeePct} an, auf einen angenommenen Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg.`,
     personalDutyCharged: ({
       weightKg,
       deemedEurPerKg,
@@ -242,18 +242,18 @@ const de: Dictionary = {
       categoryLabel,
       securityFeePct,
     }) =>
-      `~${weightKg} kg zu einem unterstellten Wert von ${deemedEurPerKg} EUR/kg, verzollt mit ${dutyPct} für ${categoryLabel} zuzüglich ${securityFeePct} Sicherheitsgebühr.`,
+      `~${weightKg} kg zu einem angenommenen Wert von ${deemedEurPerKg} EUR/kg, verzollt mit ${dutyPct} für ${categoryLabel} zuzüglich ${securityFeePct} Sicherheitsgebühr.`,
     personalDutyUnspecified: ({
       securityFeePct,
       deemedEurPerKg,
       weightKg,
       unspecifiedDutyPct,
     }) =>
-      `Sie haben noch nicht angegeben, was im Paket ist, daher wird ein pauschaler Platzhaltersatz von ${unspecifiedDutyPct} auf einen unterstellten Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg angenommen, zuzüglich ${securityFeePct} Sicherheitsgebühr. Wählen Sie oben aus, was Sie versenden, für eine genauere Schätzung.`,
+      `Sie haben noch nicht angegeben, was Sie versenden, daher wird ein pauschaler Satz von ${unspecifiedDutyPct} auf einen angenommenen Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg angenommen, zuzüglich ${securityFeePct} Sicherheitsgebühr. Wählen Sie oben aus, was Sie versenden, um eine genauere Schätzung zu erhalten.`,
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `Ein Karton der Größe ${boxLabel} zum Festpreis von ${priceEur}. Der Preis bleibt gleich, egal wie schwer er ist.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
-      `${numBoxes} × Kartons der Größe ${boxLabel} zum Festpreis von je ${priceEur}. Der Preis bleibt gleich, egal wie schwer sie sind.`,
+      `${numBoxes} × Karton der Größe ${boxLabel} zum Festpreis von je ${priceEur}. Der Preis bleibt gleich, egal wie schwer sie sind.`,
     personalBasisMixedSizes: ({ breakdown }) =>
       `${breakdown} — jede Größe zu ihrem eigenen Festpreis, unabhängig vom Gewicht.`,
     personalBasisPerKg: ({ weightKg, perKgEur }) =>
@@ -274,7 +274,7 @@ const de: Dictionary = {
     personalAlternativeFromMixedBoxes: ({ totalBoxes, weightKg, altEur, perKgEur }) =>
       `Diese ${totalBoxes} Kartons kommen auf rund ${weightKg} kg — ${altEur} bei ${perKgEur}/kg.`,
     businessDutyByWeight: ({ deemedEurPerKg, chargeableKg, dutyPct, securityFeePct }) =>
-      `Berechnet auf Basis eines unterstellten Werts von ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), mit ${dutyPct} Zoll zuzüglich ${securityFeePct} Sicherheitsgebühr. Der tatsächliche Warenwert ändert an dieser Zahl nichts.`,
+      `Berechnet auf Basis eines angenommenen Werts von ${deemedEurPerKg} EUR/kg (${chargeableKg} kg), mit ${dutyPct} Zoll zuzüglich ${securityFeePct} Sicherheitsgebühr. Der tatsächliche Warenwert ändert an dieser Zahl nichts.`,
     businessDutyByValue: ({
       valueEur,
       dutyPct,
@@ -286,7 +286,7 @@ const de: Dictionary = {
   },
 
   personalCalculator: {
-    howToPay: "Wie möchten Sie bezahlen?",
+    howToPay: "Wie möchten Sie abrechnen?",
     howToPayBody:
       "Ein Festpreis pro Karton, egal wie schwer er ist, oder ein Festpreis pro Kilo. Wählen Sie, was zu Ihrer Sendung passt — die Schätzung unten zeigt, was die andere Variante kosten würde.",
     byTheBox: "Pro Karton",
@@ -324,15 +324,15 @@ const de: Dictionary = {
     state: "Region",
     selectState: "Region auswählen",
     pickupZoneNote:
-      "Das ist Berlin/Brandenburg — wir holen es selbst ab, keine DHL-Strecke.",
+      "Das ist Berlin/Brandenburg — wir holen es selbst ab, kein DHL-Versand nötig.",
     dhlZoneNote:
-      "Außerhalb Berlin/Brandenburg — Sie versenden dies per DHL an uns, bereits im Kartonpreis unten enthalten.",
+      "Außerhalb von Berlin/Brandenburg — Sie versenden dies per DHL an uns; die Kosten dafür sind bereits im Kartonpreis unten enthalten.",
     xxlPickupOnly:
       "Nur bei Abholung in Berlin/Brandenburg verfügbar — zu schwer für DHL-Standardpakete.",
     boxSize: "Kartongröße",
     holdsAbout: (kg) => `fasst ~${kg} kg`,
     drawnToScale:
-      "maßstabsgetreu dargestellt — die drei Größen sind im echten Verhältnis zueinander gezeigt",
+      "maßstabsgetreu — die drei Größen sind im richtigen Verhältnis zueinander dargestellt",
     scaleModelLabel: (boxLabel, w, d, h) =>
       `Maßstabsgetreues Modell des Kartons ${boxLabel}, ${w} mal ${d} mal ${h} Zentimeter`,
     howManyBoxes: "Wie viele Kartons",
@@ -348,14 +348,14 @@ const de: Dictionary = {
       `Berechnet nach tatsächlichem Gewicht, zum Festpreis von ${perKg} pro Kilo, unabhängig von den Kartons.`,
     whatsInIt: "Was versenden Sie?",
     whatsInItBody:
-      "Das ändert nichts am Versandpreis. Es legt den Satz fest, den der libanesische Zoll bei Ankunft möglicherweise berechnet. Wählen Sie so viele wie zutreffen — bleibt es leer, nehmen wir einen pauschalen Platzhaltersatz an.",
+      "Das ändert nichts am Versandpreis. Es legt den Satz fest, den der libanesische Zoll bei Ankunft möglicherweise berechnet. Wählen Sie alles aus, was zutrifft — bleibt es leer, nehmen wir einen pauschalen Satz an.",
     chooseWhatsInside: "Inhalt auswählen",
     itemsChosenEdit: (n) => `${n} Artikel ausgewählt — bearbeiten`,
     doneChoosing: "Fertig",
     removeItem: (label) => `${label} entfernen`,
     contentsNotSpecified: "Inhalt nicht angegeben",
     summaryOneBox: (boxLabel) => `1 × Karton ${boxLabel}`,
-    summaryManyBoxes: (n, boxLabel) => `${n} × Kartons ${boxLabel}`,
+    summaryManyBoxes: (n, boxLabel) => `${n} × Karton ${boxLabel}`,
     summaryMixedBoxes: (breakdown) => `${breakdown} Kartons`,
     summaryWeight: (kg) => `${kg} kg`,
     checkThisWithUs: "Bei uns nachfragen",
@@ -363,17 +363,17 @@ const de: Dictionary = {
     estimatedAllIn: "geschätzt, alles inklusive",
     boxPriceLabel: "Kartonpreis",
     dhlLabel: "DHL-Versand",
-    shippingYouPayUs: "Versand — Sie zahlen an uns",
-    dutyMayCharge: "Zoll — vom Zoll bei Ankunft möglicherweise erhoben",
+    shippingYouPayUs: "Versandkosten — Sie zahlen sie an uns",
+    dutyMayCharge: "Zollgebühr — bei Ankunft möglicherweise vom Zoll erhoben",
     customsFinalAssessment: "Die endgültige Festsetzung erfolgt durch den Zoll, nicht durch uns.",
-    cheaperByAmount: (amount) => `Das ist der günstigere Versandweg, um ${amount}.`,
+    cheaperByAmount: (amount) => `Das ist die günstigere Variante, um ${amount}.`,
     otherOptionSaves: (amount) =>
-      `Die andere Option würde etwa ${amount} sparen — ein Blick wert.`,
-    bothOptionsSame: "Beide Optionen kommen hier etwa gleich aus.",
+      `Die andere Option würde etwa ${amount} sparen — einen Blick wert.`,
+    bothOptionsSame: "Beide Optionen kosten hier ungefähr gleich viel.",
     footnote: (destination, dataAsOf) =>
-      `Der Versandpreis deckt ab, was wir übernehmen — Berlin nach ${destination}, in unserem eigenen konsolidierten Container. Die Zollgebühr ist gesondert: Sie wird vom libanesischen Zoll bei Ankunft erhoben, nicht von uns, und wir haben sie anhand des Paketgewichts zu dem unterstellten Wert geschätzt, den der Zoll auf persönliche Gegenstände anwendet. Die Zollsätze stammen vom ${dataAsOf} und müssen erneut bestätigt werden, und der Zoll trifft die endgültige Festsetzung am Tag der Ankunft. Dies ist eine Schätzung, kein Angebot, und wir nehmen noch keine Buchungen an.`,
+      `Der Versandpreis deckt ab, was wir übernehmen — von Berlin in den ${destination}, in unserem eigenen Sammelcontainer. Die Zollgebühr ist gesondert: Sie wird vom libanesischen Zoll bei Ankunft erhoben, nicht von uns, und wir haben sie anhand des Sendungsgewichts zu dem angenommenen Wert geschätzt, den der Zoll auf persönliche Gegenstände anwendet. Die Zollsätze stammen aus ${dataAsOf} und müssen erneut bestätigt werden, und der Zoll trifft die endgültige Festsetzung am Tag der Ankunft. Dies ist eine Schätzung, kein Angebot, und wir nehmen noch keine Buchungen an.`,
     whatsappMessage: ({ destination, summary, categoryLabel, shipping, duty }) =>
-      `Hallo, ich habe den Rechner auf Ihrer Website benutzt. Privates Paket nach ${destination}, ${summary}, ${categoryLabel}. Versand ${shipping}, geschätzter Zoll ${duty}. Können Sie das bestätigen?`,
+      `Hallo, ich habe den Rechner auf Ihrer Website benutzt. Private Sendung in den ${destination}, ${summary}, ${categoryLabel}. Versand ${shipping}, geschätzter Zoll ${duty}. Können Sie das bestätigen?`,
   },
 
   businessCalculator: {
@@ -383,7 +383,7 @@ const de: Dictionary = {
       { text: "Besteuert " },
       { text: "nach Gewicht", strong: true },
       {
-        text: ". Der Zoll setzt einen unterstellten Wert pro Kilo an, der tatsächliche Warenwert ändert also nichts. Der deklarierte Wert wird nicht berücksichtigt.",
+        text: ". Der Zoll setzt einen angenommenen Wert pro Kilo an, der tatsächliche Warenwert ändert also nichts. Der deklarierte Wert wird nicht berücksichtigt.",
       },
     ],
     newGoodsTag: "Neue Waren",
@@ -395,7 +395,7 @@ const de: Dictionary = {
       },
     ],
     footnote: (dataAsOf) =>
-      `Die Fracht wird in beiden Fällen nach Gewicht berechnet, und die Abfertigung ist eine Pauschalgebühr pro Sendung. Dies ist eine Schätzung, kein Angebot — die Sätze stammen vom ${dataAsOf} und müssen erneut bestätigt werden. Die endgültige Zollfestsetzung erfolgt durch den libanesischen Zoll, nicht durch uns, und wir nehmen noch keine Buchungen an.`,
+      `Die Fracht wird in beiden Fällen nach Gewicht berechnet, und die Abfertigung ist eine Pauschalgebühr pro Sendung. Dies ist eine Schätzung, kein Angebot — die Sätze stammen aus ${dataAsOf} und müssen erneut bestätigt werden. Die endgültige Zollfestsetzung erfolgt durch den libanesischen Zoll, nicht durch uns, und wir nehmen noch keine Buchungen an.`,
     whatAreYouSending: "Was versenden Sie?",
     whatAreYouSendingBody:
       "Der libanesische Zoll erhebt für jede Warenart einen anderen Satz. Wählen Sie die passendste Kategorie — der angezeigte Prozentsatz ist der Zollsatz.",
@@ -414,7 +414,7 @@ const de: Dictionary = {
     dutyFollowsValue: (categoryLabel, dutyPct, vatPct, securityPct) =>
       `Der Zoll auf ${categoryLabel} richtet sich nach dem Warenwert, mit ${dutyPct} zuzüglich ${vatPct} MwSt. und ${securityPct} Sicherheitsgebühr.`,
     switchedOffBecause: (categoryLabel) =>
-      `Deaktiviert, weil ${categoryLabel} zu einem unterstellten Wert pro Kilo veranlagt werden. Eine Änderung dieser Zahl würde den Zoll nicht beeinflussen, daher gilt sie hier nicht.`,
+      `Deaktiviert: Bei ${categoryLabel} gilt ein angenommener Wert pro Kilo, unabhängig vom deklarierten Wert. Eine Änderung dieser Zahl würde den Zoll nicht beeinflussen, daher ist sie hier ohne Wirkung.`,
     checkThisWithUs: "Bei uns nachfragen",
     check: "Nachfragen",
     estimatedTotal: "Geschätzter Gesamtbetrag",
@@ -429,10 +429,10 @@ const de: Dictionary = {
     createAccountEyebrow: "Konto erstellen",
     whatSigningUpFor: "Wofür möchten Sie sich registrieren?",
     whatSigningUpForBody:
-      "Eine Sendung aufgeben und Produkte beschaffen erfordern völlig unterschiedliche Angaben, daher stellen die beiden Wege unterschiedliche Fragen.",
+      "Eine Sendung aufzugeben und Produkte zu beschaffen erfordert völlig unterschiedliche Angaben, daher stellen die beiden Wege unterschiedliche Fragen.",
     privateTag: "Versand",
     privateTitle: "Privat",
-    privateBody: "Versand persönlicher oder Haushaltsgegenstände an Familie.",
+    privateBody: "Versand von persönlichen Gegenständen oder Hausrat an die Familie.",
     businessTag: "Handel",
     businessTitle: "Geschäftlich",
     businessBody: "Beschaffung von Produkten oder Aufgabe einer Handelsbestellung.",
@@ -473,7 +473,7 @@ const de: Dictionary = {
           { id: "senderEmail", label: "E-Mail" },
           { id: "senderPhone", label: "Telefon / WhatsApp" },
           { id: "senderAddress", label: "Straße und Hausnummer" },
-          { id: "senderCity", label: "Ort und Postleitzahl" },
+          { id: "senderCity", label: "Postleitzahl und Ort" },
         ],
       },
       {
