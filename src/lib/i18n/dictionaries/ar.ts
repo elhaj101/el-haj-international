@@ -8,10 +8,6 @@ import type { Dictionary } from "../dictionary";
  */
 const boxWord = (n: number) => (n >= 3 && n <= 10 ? "كراتين" : "كرتونة");
 
-/** Same Arabic number-noun agreement rule as boxWord, for the "what are you
-    sending" multi-select list (up to 15 items). */
-const itemWord = (n: number) => (n >= 3 && n <= 10 ? "عناصر" : "عنصر");
-
 const ar: Dictionary = {
   meta: {
     // The company name stays in Latin script, as it is on the logo. "El Haj"
@@ -368,10 +364,7 @@ const ar: Dictionary = {
     whatsInIt: "ما الذي تُرسله؟",
     whatsInItBody:
       "هذا لا يغيّر سعر الشحن، بل يحدّد النسبة التي قد يفرضها الجمرك اللبناني عند الوصول. اختر كل ما ينطبق — وإن تركته فارغًا، سنفترض معدّلًا افتراضيًا عامًا.",
-    chooseWhatsInside: "اختر محتويات الشحنة",
-    itemsChosenEdit: (n) => `${n} ${itemWord(n)} مختار — تعديل`,
-    doneChoosing: "تم",
-    removeItem: (label) => `إزالة ${label}`,
+    multiSelectHint: "اضغط مع الاستمرار على Ctrl (أو Cmd على ماك) لاختيار أكثر من عنصر.",
     contentsNotSpecified: "المحتوى غير محدد",
     summaryNoBoxes: "لا كراتين بعد",
     summaryOneBox: (boxLabel) => `كرتونة واحدة مقاس ${boxLabel}`,

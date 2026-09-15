@@ -66,7 +66,6 @@ export default function PersonalCalculator({
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([
     LOWEST_DUTY_CATEGORY.id,
   ]);
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   // Country defaults to Germany — most visitors to a Berlin-based
   // forwarder's site are shipping from Germany, so this is the common
   // case, not an assumption of the cheapest outcome (see below). State
@@ -313,6 +312,78 @@ export default function PersonalCalculator({
               </div>
             </div>
 
+            {/* ---- What's in it. Sets the duty rate only — never the
+                   shipping price, which stays flat. No declared value is
+                   asked for, because customs assesses personal effects on
+                   a deemed value per kilo, and the weight is already
+                   known from the boxes or the slider below.
+
+                   A real multi-select, not a disclosure button opening a
+                   checkbox grid — same "real input, not a custom control"
+                   reasoning as the country/state dropdowns above, and it
+                   sits directly under them now for the same reason: these
+                   three questions (where from, what's inside) are asked
+                   before anything about the parcel's size, not after.
+                   No duty percentage is shown anywhere here — a personal
+                   sender shouldn't have to weigh customs rates against
+                   each other to answer "what's inside", any more than the
+                   box-vs-kilo choice below asks about HS codes. The rate
+                   still applies underneath (see effectiveCategoryId
+                   above); it's just not part of this decision. ---- */}
+            <div>
+              <label htmlFor="whats-in-it" className="text-sm font-semibold">
+                {t.whatsInIt}
+              </label>
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                {t.whatsInItBody}
+              </p>
+              <select
+                id="whats-in-it"
+                multiple
+                size={7}
+                value={selectedCategoryIds}
+                onChange={(e) =>
+                  setSelectedCategoryIds(
+                    Array.from(e.target.selectedOptions, (o) => o.value),
+                  )
+                }
+                className="mt-3 w-full rounded-xl border border-line bg-bg p-2 text-sm"
+              >
+                {CARGO_CATEGORIES.map((c) => {
+                  const strings = dict.cargoCategories[c.id];
+                  return (
+                    <option
+                      key={c.id}
+                      value={c.id}
+                      title={strings.blurb}
+                      className="rounded-lg px-2 py-1.5"
+                    >
+                      {strings.label}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="mt-2 text-xs text-muted">{t.multiSelectHint}</p>
+
+              {selectedCategories.some((c) => dict.cargoCategories[c.id].caveat) && (
+                <div className="mt-4 space-y-2">
+                  {selectedCategories
+                    .filter((c) => dict.cargoCategories[c.id].caveat)
+                    .map((c) => {
+                      const strings = dict.cargoCategories[c.id];
+                      return (
+                        <p
+                          key={c.id}
+                          className="rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed"
+                        >
+                          <strong>{strings.label}:</strong> {strings.caveat}
+                        </p>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+
             {byBoxes ? (
               <>
                 {/* ---- Box size and how many — one combined choice. Each
@@ -436,124 +507,6 @@ export default function PersonalCalculator({
                 </p>
               </div>
             )}
-
-            {/* ---- What's in it. Sets the duty rate only — never the
-                   shipping price, which stays flat. No declared value is
-                   asked for, because customs assesses personal effects on
-                   a deemed value per kilo, and the weight is already
-                   known from the boxes or the slider above.
-
-                   Multi-select, cart-style: pick as many items as actually
-                   apply rather than one "category" that has to stand in for
-                   the whole box. No duty percentage is shown anywhere here
-                   — a personal sender shouldn't have to weigh customs rates
-                   against each other to answer "what's inside", any more
-                   than the box-vs-kilo choice above asks about HS codes.
-                   The rate still applies underneath (see effectiveCategoryId
-                   above); it's just not part of this decision. Collapsed by
-                   default since fifteen items is a lot to scan before ever
-                   reaching the result below. ---- */}
-            <div>
-              <label className="text-sm font-semibold">{t.whatsInIt}</label>
-              <p className="mt-2 text-xs leading-relaxed text-muted">
-                {t.whatsInItBody}
-              </p>
-
-              {selectedCategories.length > 0 && (
-                <ul className="mt-4 flex flex-wrap gap-2">
-                  {selectedCategories.map((c) => {
-                    const strings = dict.cargoCategories[c.id];
-                    return (
-                      <li key={c.id}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedCategoryIds((ids) =>
-                              ids.filter((id) => id !== c.id),
-                            )
-                          }
-                          aria-label={t.removeItem(strings.label)}
-                          className="flex items-center gap-1.5 rounded-full border border-line bg-bg-alt py-1.5 ps-3 pe-2.5 text-xs font-medium transition-colors hover:border-fg/25"
-                        >
-                          {strings.label}
-                          <span aria-hidden className="text-muted">
-                            ×
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-
-              <button
-                type="button"
-                aria-expanded={categoriesExpanded}
-                aria-controls="whats-in-it-list"
-                onClick={() => setCategoriesExpanded((v) => !v)}
-                className="mt-4 rounded-full border border-line bg-bg-alt px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent/50"
-              >
-                {categoriesExpanded
-                  ? t.doneChoosing
-                  : selectedCategories.length > 0
-                    ? t.itemsChosenEdit(selectedCategories.length)
-                    : t.chooseWhatsInside}
-              </button>
-
-              {categoriesExpanded && (
-                <fieldset id="whats-in-it-list" className="mt-4 grid grid-cols-2 gap-2">
-                  <legend className="sr-only">{t.whatsInIt}</legend>
-                  {CARGO_CATEGORIES.map((c) => {
-                    const on = selectedCategoryIds.includes(c.id);
-                    const strings = dict.cargoCategories[c.id];
-                    return (
-                      <label
-                        key={c.id}
-                        className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-start transition-colors sm:p-4 ${
-                          on
-                            ? "border-fg/30 bg-bg-alt shadow-sm"
-                            : "border-line hover:border-fg/25"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={on}
-                          onChange={() =>
-                            setSelectedCategoryIds((ids) =>
-                              on
-                                ? ids.filter((id) => id !== c.id)
-                                : [...ids, c.id],
-                            )
-                          }
-                          className="mt-0.5 shrink-0 accent-[var(--accent)]"
-                        />
-                        <span className="text-sm font-semibold leading-tight">
-                          {strings.label}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </fieldset>
-              )}
-
-              {selectedCategories.some((c) => dict.cargoCategories[c.id].caveat) && (
-                <div className="mt-4 space-y-2">
-                  {selectedCategories
-                    .filter((c) => dict.cargoCategories[c.id].caveat)
-                    .map((c) => {
-                      const strings = dict.cargoCategories[c.id];
-                      return (
-                        <p
-                          key={c.id}
-                          className="rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs leading-relaxed"
-                        >
-                          <strong>{strings.label}:</strong> {strings.caveat}
-                        </p>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
 
             <div className="lg:hidden">
               <PersonalResult quote={quote} summary={summary} t={t} locale={locale} />

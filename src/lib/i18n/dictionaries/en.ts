@@ -349,10 +349,7 @@ const en: Dictionary = {
     whatsInIt: "What are you sending?",
     whatsInItBody:
       "This does not change the shipping price. It sets the rate Lebanese customs may charge on arrival. Pick as many as apply — leave it blank and we'll assume a standard placeholder rate.",
-    chooseWhatsInside: "Choose what's inside",
-    itemsChosenEdit: (n) => `${n} item${n === 1 ? "" : "s"} chosen — edit`,
-    doneChoosing: "Done",
-    removeItem: (label) => `Remove ${label}`,
+    multiSelectHint: "Hold Ctrl (Cmd on Mac) to pick more than one.",
     contentsNotSpecified: "contents not specified",
     summaryNoBoxes: "No boxes yet",
     summaryOneBox: (boxLabel) => `1 × ${boxLabel} box`,

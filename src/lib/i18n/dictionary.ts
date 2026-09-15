@@ -318,14 +318,10 @@ export interface Dictionary {
     chargedOnActualWeight: (perKg: string) => string;
     whatsInIt: string;
     whatsInItBody: string;
-    /** Trigger label, collapsed, nothing picked yet. */
-    chooseWhatsInside: string;
-    /** Trigger label, collapsed, n items picked — reopens the list. */
-    itemsChosenEdit: (n: number) => string;
-    /** Trigger label, expanded — closes the list. */
-    doneChoosing: string;
-    /** Remove-chip button aria-label. */
-    removeItem: (label: string) => string;
+    /** Shown under the "what are you sending" multi-select — a native
+        `<select multiple>` needs a modifier key to pick more than one
+        option, which isn't self-evident, so this spells it out. */
+    multiSelectHint: string;
     /** Stands in for categoryLabel in the WhatsApp message when the sender
         left the "what are you sending" list empty. */
     contentsNotSpecified: string;

@@ -352,10 +352,7 @@ const de: Dictionary = {
     whatsInIt: "Was versenden Sie?",
     whatsInItBody:
       "Das ändert nichts am Versandpreis. Es legt den Satz fest, den der libanesische Zoll bei Ankunft möglicherweise berechnet. Wählen Sie alles aus, was zutrifft — bleibt es leer, nehmen wir einen pauschalen Satz an.",
-    chooseWhatsInside: "Inhalt auswählen",
-    itemsChosenEdit: (n) => `${n} Artikel ausgewählt — bearbeiten`,
-    doneChoosing: "Fertig",
-    removeItem: (label) => `${label} entfernen`,
+    multiSelectHint: "Strg gedrückt halten (Cmd bei Mac), um mehrere auszuwählen.",
     contentsNotSpecified: "Inhalt nicht angegeben",
     summaryNoBoxes: "Noch keine Kartons",
     summaryOneBox: (boxLabel) => `1 × Karton ${boxLabel}`,
