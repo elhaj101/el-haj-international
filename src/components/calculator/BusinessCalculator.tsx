@@ -6,6 +6,7 @@ import RichText from "@/components/RichText";
 import SliderWithNumber from "./SliderWithNumber";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { arrowFor, type Locale } from "@/lib/i18n/locales";
+import { EU_COUNTRIES, GERMANY_COUNTRY_ID, getEuCountry } from "@/lib/euCountries";
 import {
   BAND_COLORS,
   CARGO_CATEGORIES,
@@ -50,6 +51,30 @@ export default function BusinessCalculator({
   const [categoryId, setCategoryId] = useState<string>(LOWEST_DUTY_CATEGORY.id);
   const [weight, setWeight] = useState(5);
   const [value, setValue] = useState(50);
+  // Where it ships from — context for the inquiry only, not priced. Unlike
+  // the personal calculator's DHL passthrough, business freight is a
+  // placeholder flat rate arranged directly once Ali replies (container/
+  // FCL groupage, not a DHL zone), so this doesn't feed calculateQuote at
+  // all — it only ends up in the WhatsApp message below. Reuses
+  // personalCalculator's country/state strings and EU_COUNTRIES rather
+  // than duplicating the same 27-country list under a second key.
+  const [countryId, setCountryId] = useState(GERMANY_COUNTRY_ID);
+  const [state, setState] = useState("");
+  const statesForCountry = getEuCountry(countryId)?.states ?? [];
+  const changeCountryId = (id: string) => {
+    setCountryId(id);
+    setState("");
+  };
+  const sortedCountries = useMemo(
+    () =>
+      [...EU_COUNTRIES].sort((a, b) =>
+        dict.personalCalculator.euCountryNames[a.id].localeCompare(
+          dict.personalCalculator.euCountryNames[b.id],
+          locale,
+        ),
+      ),
+    [dict, locale],
+  );
 
   const category = getCategory(categoryId);
   const categoryStrings = dict.cargoCategories[category.id];
@@ -72,8 +97,13 @@ export default function BusinessCalculator({
   ];
   const totalForBar = segments.reduce((a, s) => a + s.amount, 0) || 1;
 
+  const shipFromLabel = state
+    ? `${dict.personalCalculator.euCountryNames[countryId]} – ${state}`
+    : dict.personalCalculator.euCountryNames[countryId];
+
   const waMessage = t.whatsappMessage({
     destination: destinationName,
+    shipFrom: shipFromLabel,
     categoryLabel: categoryStrings.label,
     weight,
     declaredValue: byValue ? eur(value, locale) : null,
@@ -174,6 +204,51 @@ export default function BusinessCalculator({
         {/* ---- Inputs + result ---- */}
         <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
           <div className="space-y-9">
+            {/* ---- Where it ships from — same two real dropdowns as the
+                   personal calculator, for the same reason (nothing to
+                   mistype), but purely informational here: it rides along
+                   in the inquiry message below and never touches
+                   calculateQuote. See the shippingFromNote copy for why. ---- */}
+            <div>
+              <label htmlFor="business-ship-from-country" className="text-sm font-semibold">
+                {dict.personalCalculator.shippingFrom}
+              </label>
+              <select
+                id="business-ship-from-country"
+                autoComplete="country"
+                value={countryId}
+                onChange={(e) => changeCountryId(e.target.value)}
+                className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
+              >
+                {sortedCountries.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {dict.personalCalculator.euCountryNames[c.id]}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-3">
+                <label htmlFor="business-ship-from-state" className="text-sm font-semibold">
+                  {dict.personalCalculator.state}
+                </label>
+                <select
+                  id="business-ship-from-state"
+                  autoComplete="address-level1"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
+                >
+                  <option value="">{dict.personalCalculator.selectState}</option>
+                  {statesForCountry.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-2 text-xs text-muted">{t.shippingFromNote}</p>
+            </div>
+
             {/* Weight always applies — it drives freight in every case, and
                 duty as well when the category is weight-based. */}
             <div>

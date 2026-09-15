@@ -433,11 +433,13 @@ const ar: Dictionary = {
       `يُحتسب الرسم الجمركي على ${categoryLabel} وفق القيمة الفعلية للبضاعة، بنسبة ${dutyPct} إضافةً إلى ${vatPct} ضريبة قيمة مضافة و${securityPct} رسم أمان.`,
     switchedOffBecause: (categoryLabel) =>
       `مُعطَّلة لأن ${categoryLabel} تُقيَّم على أساس قيمة مفترضة لكل كيلوغرام. تغيير هذا الرقم لن يغيّر الرسم الجمركي، لذا لا ينطبق هنا.`,
+    shippingFromNote:
+      "هذا للسياق فقط وليس جزءًا من التقدير أدناه — يُتفق على الاستلام والشحن للشحنات التجارية مباشرة بعد ردّنا، وليس محسوبًا تلقائيًا حسب المنطقة كما في الكراتين الشخصية.",
     checkThisWithUs: "استفسر عن هذا التقدير",
     check: "استفسر",
     estimatedTotal: "المجموع المقدَّر",
-    whatsappMessage: ({ destination, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
-      `مرحبًا، استخدمت حاسبة الأعمال على موقعكم. ${destination}، ${categoryLabel}، نحو ${weight} كغ${
+    whatsappMessage: ({ destination, shipFrom, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
+      `مرحبًا، استخدمت حاسبة الأعمال على موقعكم. شحن من ${shipFrom} إلى ${destination}، ${categoryLabel}، نحو ${weight} كغ${
         declaredValue ? `، القيمة المصرَّح بها ${declaredValue}` : ""
       }. التقدير من ${rangeLow} إلى ${rangeHigh}. هل يمكنكم تأكيد ذلك؟`,
   },

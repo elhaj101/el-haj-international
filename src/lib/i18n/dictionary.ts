@@ -379,12 +379,20 @@ export interface Dictionary {
       securityPct: string,
     ) => string;
     switchedOffBecause: (categoryLabel: string) => string;
+    /** Shown under the (reused personalCalculator) country/state fields —
+        explains that, unlike the personal calculator's DHL passthrough,
+        origin here is context for the inquiry only and does not change
+        the freight estimate below; business shipments are arranged
+        directly once Ali replies, not auto-priced by zone. */
+    shippingFromNote: string;
     checkThisWithUs: string;
     check: string;
     estimatedTotal: string;
-    /** WhatsApp prefill message, params already localized/formatted. */
+    /** WhatsApp prefill message, params already localized/formatted.
+        `shipFrom` is the chosen country (plus state, if picked). */
     whatsappMessage: (p: {
       destination: string;
+      shipFrom: string;
       categoryLabel: string;
       weight: number;
       declaredValue: string | null;

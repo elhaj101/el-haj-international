@@ -414,11 +414,13 @@ const en: Dictionary = {
       `Duty on ${categoryLabel.toLowerCase()} follows what the goods are worth, at ${dutyPct} plus ${vatPct} VAT and ${securityPct} security fee.`,
     switchedOffBecause: (categoryLabel) =>
       `Switched off because ${categoryLabel.toLowerCase()} are assessed on a deemed value per kilo. Changing this figure could not change the duty, so it does not apply here.`,
+    shippingFromNote:
+      "This is context for the inquiry, not part of the estimate below — pickup and freight for business shipments are arranged directly once we reply, not auto-priced by zone the way personal boxes are.",
     checkThisWithUs: "Check this with us",
     check: "Check",
     estimatedTotal: "Estimated total",
-    whatsappMessage: ({ destination, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
-      `Hi, I used the business calculator on your site. ${destination}, ${categoryLabel.toLowerCase()}, ~${weight} kg${
+    whatsappMessage: ({ destination, shipFrom, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
+      `Hi, I used the business calculator on your site. Shipping from ${shipFrom} to ${destination}, ${categoryLabel.toLowerCase()}, ~${weight} kg${
         declaredValue ? `, declared ${declaredValue}` : ""
       }. Estimated ${rangeLow}–${rangeHigh}. Can you confirm?`,
   },

@@ -417,11 +417,13 @@ const de: Dictionary = {
       `Der Zoll auf ${categoryLabel} richtet sich nach dem Warenwert, mit ${dutyPct} zuzüglich ${vatPct} MwSt. und ${securityPct} Sicherheitsgebühr.`,
     switchedOffBecause: (categoryLabel) =>
       `Deaktiviert: Bei ${categoryLabel} gilt ein angenommener Wert pro Kilo, unabhängig vom deklarierten Wert. Eine Änderung dieser Zahl würde den Zoll nicht beeinflussen, daher ist sie hier ohne Wirkung.`,
+    shippingFromNote:
+      "Das dient nur als Kontext für die Anfrage und ist nicht Teil der Schätzung unten — Abholung und Fracht für Geschäftssendungen werden direkt nach unserer Antwort vereinbart, nicht automatisch nach Zone berechnet wie bei privaten Kartons.",
     checkThisWithUs: "Bei uns nachfragen",
     check: "Nachfragen",
     estimatedTotal: "Geschätzter Gesamtbetrag",
-    whatsappMessage: ({ destination, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
-      `Hallo, ich habe den Geschäftsrechner auf Ihrer Website benutzt. ${destination}, ${categoryLabel}, ~${weight} kg${
+    whatsappMessage: ({ destination, shipFrom, categoryLabel, weight, declaredValue, rangeLow, rangeHigh }) =>
+      `Hallo, ich habe den Geschäftsrechner auf Ihrer Website benutzt. Versand von ${shipFrom} in den ${destination}, ${categoryLabel}, ~${weight} kg${
         declaredValue ? `, deklariert ${declaredValue}` : ""
       }. Geschätzt ${rangeLow}–${rangeHigh}. Können Sie das bestätigen?`,
   },
