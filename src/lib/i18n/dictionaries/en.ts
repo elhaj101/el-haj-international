@@ -324,6 +324,8 @@ const en: Dictionary = {
       "That's Berlin/Brandenburg — we collect it ourselves, no DHL leg.",
     dhlZoneNote:
       "Outside Berlin/Brandenburg — you ship this to us via DHL, already priced into the box price below.",
+    euDhlApproximationNote:
+      "The DHL cost folded into the box price below is Deutsche Post's own rate for the reverse direction (Germany to your country) — a close stand-in, not a rate sourced for this exact corridor.",
     xxlPickupOnly:
       "Only available for Berlin/Brandenburg pickup — too heavy for standard DHL Paket.",
     boxSize: "Box size",

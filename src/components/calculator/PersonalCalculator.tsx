@@ -51,10 +51,14 @@ export default function PersonalCalculator({
 }) {
   const t = dict.personalCalculator;
   const arrow = arrowFor(locale);
-  // Defaults are deliberately the cheapest possible parcel — smallest box,
-  // one of it, lowest-duty category — so the first price a visitor sees is
-  // the floor, not a guess at their actual shipment. See SMALLEST_BOX_SIZE
-  // and LOWEST_DUTY_CATEGORY in pricing.ts.
+  // Box size and category default to the cheapest option in their own
+  // list (smallest box, lowest-duty category — see SMALLEST_BOX_SIZE and
+  // LOWEST_DUTY_CATEGORY in pricing.ts), so the first number a visitor
+  // sees isn't an arbitrary guess. That is no longer "the floor" of the
+  // whole quote, though: the shipping zone (below) defaults to
+  // unselected, which prices as `domestic-dhl`, not the cheaper `pickup`
+  // — deliberately, since assuming the cheapest zone before the customer
+  // says where they are would be the wrong kind of optimistic default.
   const [mode, setMode] = useState<PersonalMode>("boxes");
   const [boxCounts, setBoxCounts] = useState<Record<string, number>>({
     [SMALLEST_BOX_SIZE.id]: 1,
@@ -243,11 +247,14 @@ export default function PersonalCalculator({
                    also feeds the per-kilo mode's box-price comparison, so it
                    isn't gated behind `byBoxes`.
 
-                   Two cascading dropdowns, both real selections — no free
-                   text anywhere, so there is nothing to mistype or
-                   misspell. Country picks from EU_COUNTRIES; state repopulates
-                   from that country's own state list (euCountries.ts) and
-                   resets whenever the country changes. */}
+                   Country is a real dropdown (EU_COUNTRIES) — no free text,
+                   nothing to mistype. The state dropdown only appears for
+                   Germany: it is the one country where the answer actually
+                   changes the price (pickup vs domestic-DHL), so asking it
+                   for every other country would be a control that visibly
+                   does nothing — the opposite of what a "reduce confusion"
+                   pass should ship. Every non-Germany country prices as
+                   `eu-dhl` from the country choice alone. */}
             <div>
               <label htmlFor="ship-from-country" className="text-sm font-semibold">
                 {t.shippingFrom}
@@ -266,30 +273,38 @@ export default function PersonalCalculator({
                 ))}
               </select>
 
-              <div className="mt-3">
-                <label htmlFor="ship-from-state" className="text-sm font-semibold">
-                  {t.state}
-                </label>
-                <select
-                  id="ship-from-state"
-                  autoComplete="address-level1"
-                  value={state}
-                  onChange={(e) => changeState(e.target.value)}
-                  className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
-                >
-                  <option value="">{t.selectState}</option>
-                  {statesForCountry.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                {isGermany && (
+              {isGermany ? (
+                <div className="mt-3">
+                  <label htmlFor="ship-from-state" className="text-sm font-semibold">
+                    {t.state}
+                  </label>
+                  <select
+                    id="ship-from-state"
+                    autoComplete="address-level1"
+                    value={state}
+                    onChange={(e) => changeState(e.target.value)}
+                    className="mt-3 w-full rounded-xl border border-line bg-bg p-3.5 text-sm"
+                  >
+                    <option value="">{t.selectState}</option>
+                    {statesForCountry.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
                   <p className="mt-2 text-xs text-muted">
                     {zone === "pickup" ? t.pickupZoneNote : t.dhlZoneNote}
                   </p>
-                )}
-              </div>
+                </div>
+              ) : (
+                // The EU-DHL rate is Deutsche Post's own outbound-from-Germany
+                // price, used as a stand-in for the reverse direction (see
+                // BOX_SIZES in pricing.ts) — not guaranteed euro-for-euro
+                // identical. Said outright here rather than left implicit,
+                // since it's the one place in the flow where that gap
+                // actually applies to what the customer is about to see.
+                <p className="mt-3 text-xs text-muted">{t.euDhlApproximationNote}</p>
+              )}
             </div>
 
             {byBoxes ? (

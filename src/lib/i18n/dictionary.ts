@@ -284,6 +284,11 @@ export interface Dictionary {
     pickupZoneNote: string;
     /** Same, for a German state outside Berlin/Brandenburg. */
     dhlZoneNote: string;
+    /** Shown in place of the state dropdown for every non-Germany country —
+        discloses that the EU-DHL rate folded into the box price is Deutsche
+        Post's own outbound-from-Germany price, used as a stand-in for the
+        reverse direction, not a rate sourced for this specific corridor. */
+    euDhlApproximationNote: string;
     /** Shown next to the XXL box row outside the pickup zone — it cannot
         ship there at all, see BOX_SIZES in pricing.ts. */
     xxlPickupOnly: string;

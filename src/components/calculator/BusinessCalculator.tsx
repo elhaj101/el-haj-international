@@ -194,14 +194,14 @@ export default function BusinessCalculator({
                 id="weight"
                 labelId="weight-label"
                 min={5}
-                max={1000}
-                step={5}
+                max={10000}
+                step={25}
                 value={weight}
                 onChange={setWeight}
               />
               <div className="mt-2 flex justify-between text-xs text-muted">
                 <span>{t.kgUnit(5)}</span>
-                <span>{t.kgUnit(1000)}</span>
+                <span>{t.kgUnit(10000)}</span>
               </div>
               {quote.minimumApplied && (
                 <p className="mt-3 text-xs text-accent">
@@ -234,8 +234,8 @@ export default function BusinessCalculator({
                 labelId="value-label"
                 describedById={byValue ? undefined : "value-disabled"}
                 min={50}
-                max={10000}
-                step={50}
+                max={100000}
+                step={500}
                 value={value}
                 onChange={setValue}
                 disabled={!byValue}

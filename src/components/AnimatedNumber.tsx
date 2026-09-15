@@ -61,9 +61,23 @@ export default function AnimatedNumber({
 
   // Rendered with the real value so the static export and the no-JS view are
   // both correct before any tween runs.
+  //
+  // Two spans, not one: the visible one is the GSAP-tweened counter and is
+  // `aria-hidden`, because a live region on it would announce every
+  // intermediate frame of a 0.5s count-up — rapid nonsense to a screen
+  // reader, not a price. The sr-only sibling is plain React output with no
+  // tween of its own, so it only ever holds `format(value)` — one update
+  // per actual change, debounced to the settled number for free by simply
+  // not being animated. This is the calculator's only dynamic output, so
+  // leaving it unannounced was the more consequential gap of the two.
   return (
-    <span ref={el} className={className}>
-      {format(value)}
-    </span>
+    <>
+      <span ref={el} className={className} aria-hidden="true">
+        {format(value)}
+      </span>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {format(value)}
+      </span>
+    </>
   );
 }

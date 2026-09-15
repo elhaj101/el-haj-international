@@ -327,6 +327,8 @@ const de: Dictionary = {
       "Das ist Berlin/Brandenburg — wir holen es selbst ab, kein DHL-Versand nötig.",
     dhlZoneNote:
       "Außerhalb von Berlin/Brandenburg — Sie versenden dies per DHL an uns; die Kosten dafür sind bereits im Kartonpreis unten enthalten.",
+    euDhlApproximationNote:
+      "Die DHL-Kosten im Kartonpreis unten sind der eigene Tarif der Deutschen Post für die umgekehrte Richtung (Deutschland zu Ihrem Land) — eine nahe Annäherung, kein Tarif für genau diese Strecke.",
     xxlPickupOnly:
       "Nur bei Abholung in Berlin/Brandenburg verfügbar — zu schwer für DHL-Standardpakete.",
     boxSize: "Kartongröße",
