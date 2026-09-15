@@ -201,6 +201,10 @@ export interface Dictionary {
       weightKg: number;
       unspecifiedDutyPct: string;
     }) => string;
+    /** calculatePersonalQuote(), boxes mode, empty cart — the default
+        state now that no box size is pre-selected (see boxCounts's
+        initial value in PersonalCalculator.tsx). */
+    personalBasisNoBoxes: () => string;
     /** calculatePersonalQuote(), boxes mode, exactly one box. */
     personalBasisOneBox: (p: { boxLabel: string; priceEur: string }) => string;
     /** calculatePersonalQuote(), boxes mode, more than one box. */
@@ -263,7 +267,12 @@ export interface Dictionary {
     howToPay: string;
     howToPayBody: string;
     byTheBox: string;
-    byTheKilo: (perKg: string) => string;
+    /** No price shown beside this label — a per-kg rate is only ever the
+        more expensive-looking of the two once DHL is folded in outside
+        the pickup zone, and leading with a number here read as
+        off-putting rather than informative. The real rate still shows in
+        chargedOnActualWeight once this mode is selected. */
+    byTheKilo: string;
     /** "Where are you shipping from?" — label for the country dropdown,
         decides the shipping zone together with state below. */
     shippingFrom: string;
@@ -320,6 +329,9 @@ export interface Dictionary {
     /** Stands in for categoryLabel in the WhatsApp message when the sender
         left the "what are you sending" list empty. */
     contentsNotSpecified: string;
+    /** Boxes mode, empty cart — the default state now that no box size is
+        pre-selected. */
+    summaryNoBoxes: string;
     summaryOneBox: (boxLabel: string) => string;
     summaryManyBoxes: (n: number, boxLabel: string) => string;
     /** More than one box size selected. `breakdown` is a pre-joined

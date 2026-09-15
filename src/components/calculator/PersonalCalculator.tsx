@@ -11,7 +11,6 @@ import {
   CUSTOMS_DATA_AS_OF,
   LOWEST_DUTY_CATEGORY,
   MAX_PERSONAL_BOXES,
-  SMALLEST_BOX_SIZE,
   boxDims,
   calculatePersonalQuote,
   deriveShippingZone,
@@ -51,18 +50,18 @@ export default function PersonalCalculator({
 }) {
   const t = dict.personalCalculator;
   const arrow = arrowFor(locale);
-  // Box size and category default to the cheapest option in their own
-  // list (smallest box, lowest-duty category — see SMALLEST_BOX_SIZE and
-  // LOWEST_DUTY_CATEGORY in pricing.ts), so the first number a visitor
-  // sees isn't an arbitrary guess. That is no longer "the floor" of the
-  // whole quote, though: the shipping zone (below) defaults to
-  // unselected, which prices as `domestic-dhl`, not the cheaper `pickup`
-  // — deliberately, since assuming the cheapest zone before the customer
-  // says where they are would be the wrong kind of optimistic default.
+  // Category defaults to the cheapest option in its own list (lowest-duty
+  // — see LOWEST_DUTY_CATEGORY in pricing.ts), so the first duty figure a
+  // visitor sees isn't an arbitrary guess. Box count deliberately does
+  // *not* default to one of anything: an empty cart, priced at €0 with a
+  // "pick a box size" prompt, reads as an honest starting point rather
+  // than quietly opting the visitor into a box they didn't choose. The
+  // shipping zone (below) also defaults to unselected, which prices as
+  // `domestic-dhl`, not the cheaper `pickup` — deliberately, since
+  // assuming the cheapest zone before the customer says where they are
+  // would be the wrong kind of optimistic default.
   const [mode, setMode] = useState<PersonalMode>("boxes");
-  const [boxCounts, setBoxCounts] = useState<Record<string, number>>({
-    [SMALLEST_BOX_SIZE.id]: 1,
-  });
+  const [boxCounts, setBoxCounts] = useState<Record<string, number>>({});
   const [weight, setWeight] = useState(5);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([
     LOWEST_DUTY_CATEGORY.id,
@@ -176,14 +175,22 @@ export default function PersonalCalculator({
   );
 
   const summary = byBoxes
-    ? boxLines.length === 1
-      ? boxLines[0].count === 1
-        ? t.summaryOneBox(boxLines[0].box.label)
-        : t.summaryManyBoxes(boxLines[0].count, boxLines[0].box.label)
-      : t.summaryMixedBoxes(
-          boxLines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
-        )
+    ? boxLines.length === 0
+      ? t.summaryNoBoxes
+      : boxLines.length === 1
+        ? boxLines[0].count === 1
+          ? t.summaryOneBox(boxLines[0].box.label)
+          : t.summaryManyBoxes(boxLines[0].count, boxLines[0].box.label)
+        : t.summaryMixedBoxes(
+            boxLines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
+          )
     : t.summaryWeight(weight);
+
+  // The WhatsApp CTAs below only make sense once there's an actual parcel
+  // to ask about — an empty box cart (the default now) has nothing to
+  // send. Per-kilo mode always has a real weight (its own slider starts
+  // above zero), so it's never blocked by this.
+  const canSubmit = !byBoxes || totalBoxCount > 0;
 
   const contentsLabel =
     selectedCategories.length > 0
@@ -233,7 +240,7 @@ export default function PersonalCalculator({
                       : "border-line text-muted hover:border-fg/25"
                   }`}
                 >
-                  {t.byTheKilo(eur(personalPerKgRateForZone(zone), locale))}
+                  {t.byTheKilo}
                 </button>
               </div>
             </div>
@@ -354,9 +361,10 @@ export default function PersonalCalculator({
                             count={count}
                             onChange={(n) => setCount(b.id, n)}
                             canIncrement={offered && totalBoxCount < MAX_PERSONAL_BOXES}
-                            canDecrement={
-                              count > 0 && !(count === 1 && totalBoxCount === 1)
-                            }
+                            // No floor at one box anymore — an empty cart
+                            // is the default state now, not a forbidden
+                            // one, so decrementing the last box is allowed.
+                            canDecrement={count > 0}
                             decrementLabel={t.decrementBoxLabel(b.label)}
                             incrementLabel={t.incrementBoxLabel(b.label)}
                           />
@@ -555,10 +563,13 @@ export default function PersonalCalculator({
           <aside className="hidden h-fit lg:sticky lg:top-10 lg:block">
             <PersonalResult quote={quote} summary={summary} t={t} locale={locale} />
             <a
-              href={whatsappLink(waMessage)}
-              target="_blank"
+              href={canSubmit ? whatsappLink(waMessage) : undefined}
+              target={canSubmit ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.02]"
+              aria-disabled={!canSubmit}
+              className={`mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-white transition-transform duration-200 ${
+                canSubmit ? "hover:scale-[1.02]" : "pointer-events-none opacity-40"
+              }`}
             >
               {t.checkThisWithUs} {arrow}
             </a>
@@ -583,10 +594,13 @@ export default function PersonalCalculator({
             </p>
           </div>
           <a
-            href={whatsappLink(waMessage)}
-            target="_blank"
+            href={canSubmit ? whatsappLink(waMessage) : undefined}
+            target={canSubmit ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white"
+            aria-disabled={!canSubmit}
+            className={`shrink-0 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white ${
+              canSubmit ? "" : "pointer-events-none opacity-40"
+            }`}
           >
             {t.check}
           </a>

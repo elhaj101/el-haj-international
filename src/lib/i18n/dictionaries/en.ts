@@ -245,6 +245,7 @@ const en: Dictionary = {
       unspecifiedDutyPct,
     }) =>
       `You haven't told us what's inside yet, so this uses a standard placeholder rate of ${unspecifiedDutyPct} on a deemed value of ${deemedEurPerKg} EUR/kg for ~${weightKg} kg, plus the ${securityFeePct} security fee. Pick what you're sending above for a closer estimate.`,
+    personalBasisNoBoxes: () => "Pick a box size above to see your price.",
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `One ${boxLabel} box at a flat ${priceEur}. The price is the same whatever it weighs.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -287,7 +288,7 @@ const en: Dictionary = {
     howToPayBody:
       "A flat price per box whatever it weighs, or a flat price per kilo. Pick whichever suits what you are sending — the estimate below shows what the other one would cost.",
     byTheBox: "By the box",
-    byTheKilo: (perKg) => `By the kilo · ${perKg}/kg`,
+    byTheKilo: "By the kilo",
     shippingFrom: "Where are you shipping from?",
     euCountryNames: {
       AT: "Austria",
@@ -353,6 +354,7 @@ const en: Dictionary = {
     doneChoosing: "Done",
     removeItem: (label) => `Remove ${label}`,
     contentsNotSpecified: "contents not specified",
+    summaryNoBoxes: "No boxes yet",
     summaryOneBox: (boxLabel) => `1 × ${boxLabel} box`,
     summaryManyBoxes: (n, boxLabel) => `${n} × ${boxLabel} boxes`,
     summaryMixedBoxes: (breakdown) => `${breakdown} boxes`,

@@ -478,45 +478,57 @@ export function calculatePersonalQuote(
     // What the same parcel would cost per kilo, at this same zone's
     // per-kilo rate — both pricing modes now carry the same DHL leg
     // outside the pickup zone, so the comparison stays apples-to-apples.
+    // Null with an empty cart: there is nothing yet to compare, same rule
+    // as the per-kilo branch's own zero-weight case below.
     const perKgRateForComparison = personalPerKgRateForZone(input.zone);
-    const alternativeEur = round(weightKg * perKgRateForComparison);
+    const alternativeEur =
+      totalBoxes > 0 ? round(weightKg * perKgRateForComparison) : null;
 
-    // A single size (the common case, including the empty-cart default)
-    // keeps the specific "N × size at €X each" phrasing; more than one
-    // size falls back to a plain breakdown — box *labels* (M/L/XXL) are
-    // size codes, not words needing per-locale plural agreement, so
-    // joining them needs no localization beyond the sentence around them.
+    // A single size (the common case) keeps the specific "N × size at €X
+    // each" phrasing; more than one size falls back to a plain breakdown —
+    // box *labels* (M/L/XXL) are size codes, not words needing per-locale
+    // plural agreement, so joining them needs no localization beyond the
+    // sentence around them. Cart defaults to empty (see boxCounts's
+    // initial state in PersonalCalculator.tsx), so this also has to cover
+    // "nothing picked yet" as its own case, not fall through to
+    // personalBasisMixedSizes with an empty breakdown string.
     const only = lines.length === 1 ? lines[0] : null;
-    const basis = only
-      ? only.count === 1
-        ? t.personalBasisOneBox({
-            boxLabel: only.box.label,
-            priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
-          })
-        : t.personalBasisManyBoxes({
-            numBoxes: only.count,
-            boxLabel: only.box.label,
-            priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
-          })
-      : t.personalBasisMixedSizes({
-          breakdown: lines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
-        });
+    const basis =
+      totalBoxes === 0
+        ? t.personalBasisNoBoxes()
+        : only
+          ? only.count === 1
+            ? t.personalBasisOneBox({
+                boxLabel: only.box.label,
+                priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
+              })
+            : t.personalBasisManyBoxes({
+                numBoxes: only.count,
+                boxLabel: only.box.label,
+                priceEur: eur(priceForZone(only.box, input.zone) ?? 0, locale),
+              })
+          : t.personalBasisMixedSizes({
+              breakdown: lines.map((l) => `${l.count} × ${l.box.label}`).join(", "),
+            });
 
-    const alternativeLabel = only
-      ? t.personalAlternativeFromBoxes({
-          boxLabel: only.box.label,
-          typicalKg: typicalBoxKg(only.box),
-          numBoxes: only.count,
-          weightKg,
-          altEur: eur(alternativeEur, locale),
-          perKgEur: eur(perKgRateForComparison, locale),
-        })
-      : t.personalAlternativeFromMixedBoxes({
-          totalBoxes,
-          weightKg,
-          altEur: eur(alternativeEur, locale),
-          perKgEur: eur(perKgRateForComparison, locale),
-        });
+    const alternativeLabel =
+      alternativeEur === null
+        ? ""
+        : only
+          ? t.personalAlternativeFromBoxes({
+              boxLabel: only.box.label,
+              typicalKg: typicalBoxKg(only.box),
+              numBoxes: only.count,
+              weightKg,
+              altEur: eur(alternativeEur, locale),
+              perKgEur: eur(perKgRateForComparison, locale),
+            })
+          : t.personalAlternativeFromMixedBoxes({
+              totalBoxes,
+              weightKg,
+              altEur: eur(alternativeEur, locale),
+              perKgEur: eur(perKgRateForComparison, locale),
+            });
 
     return {
       shippingEur,

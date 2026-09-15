@@ -250,6 +250,7 @@ const de: Dictionary = {
       unspecifiedDutyPct,
     }) =>
       `Sie haben noch nicht angegeben, was Sie versenden, daher wird ein pauschaler Satz von ${unspecifiedDutyPct} auf einen angenommenen Wert von ${deemedEurPerKg} EUR/kg für ~${weightKg} kg angenommen, zuzüglich ${securityFeePct} Sicherheitsgebühr. Wählen Sie oben aus, was Sie versenden, um eine genauere Schätzung zu erhalten.`,
+    personalBasisNoBoxes: () => "Wählen Sie oben eine Kartongröße, um Ihren Preis zu sehen.",
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `Ein Karton der Größe ${boxLabel} zum Festpreis von ${priceEur}. Der Preis bleibt gleich, egal wie schwer er ist.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -290,7 +291,7 @@ const de: Dictionary = {
     howToPayBody:
       "Ein Festpreis pro Karton, egal wie schwer er ist, oder ein Festpreis pro Kilo. Wählen Sie, was zu Ihrer Sendung passt — die Schätzung unten zeigt, was die andere Variante kosten würde.",
     byTheBox: "Pro Karton",
-    byTheKilo: (perKg) => `Pro Kilo · ${perKg}/kg`,
+    byTheKilo: "Pro Kilo",
     shippingFrom: "Von wo aus versenden Sie?",
     euCountryNames: {
       AT: "Österreich",
@@ -356,6 +357,7 @@ const de: Dictionary = {
     doneChoosing: "Fertig",
     removeItem: (label) => `${label} entfernen`,
     contentsNotSpecified: "Inhalt nicht angegeben",
+    summaryNoBoxes: "Noch keine Kartons",
     summaryOneBox: (boxLabel) => `1 × Karton ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} × Karton ${boxLabel}`,
     summaryMixedBoxes: (breakdown) => `${breakdown} Kartons`,

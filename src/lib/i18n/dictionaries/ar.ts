@@ -267,6 +267,7 @@ const ar: Dictionary = {
       unspecifiedDutyPct,
     }) =>
       `لم تحدّد بعد محتوى الشحنة، لذا يُستخدم معدّل افتراضي قدره ${unspecifiedDutyPct} على قيمة مفترضة قدرها ${deemedEurPerKg} يورو للكيلوغرام لنحو ${weightKg} كغ، إضافةً إلى رسم أمان ${securityFeePct}. اختر ما تُرسله أعلاه للحصول على تقدير أدق.`,
+    personalBasisNoBoxes: () => "اختر مقاس كرتونة أعلاه لرؤية السعر.",
     personalBasisOneBox: ({ boxLabel, priceEur }) =>
       `كرتونة واحدة مقاس ${boxLabel} بسعر ثابت ${priceEur}. السعر نفسه مهما كان الوزن.`,
     personalBasisManyBoxes: ({ numBoxes, boxLabel, priceEur }) =>
@@ -307,7 +308,7 @@ const ar: Dictionary = {
     howToPayBody:
       "سعر ثابت لكل كرتونة مهما كان وزنها، أو سعر ثابت لكل كيلوغرام. اختر ما يناسب شحنتك — ويُظهر التقدير أدناه كلفة الخيار الآخر.",
     byTheBox: "بالكرتونة",
-    byTheKilo: (perKg) => `بالكيلوغرام · ${perKg}/كغ`,
+    byTheKilo: "بالكيلوغرام",
     shippingFrom: "من أين ترسل الشحنة؟",
     euCountryNames: {
       AT: "النمسا",
@@ -372,6 +373,7 @@ const ar: Dictionary = {
     doneChoosing: "تم",
     removeItem: (label) => `إزالة ${label}`,
     contentsNotSpecified: "المحتوى غير محدد",
+    summaryNoBoxes: "لا كراتين بعد",
     summaryOneBox: (boxLabel) => `كرتونة واحدة مقاس ${boxLabel}`,
     summaryManyBoxes: (n, boxLabel) => `${n} ${boxWord(n)} مقاس ${boxLabel}`,
     summaryMixedBoxes: (breakdown) => `${breakdown} من الكراتين`,
